@@ -1,11 +1,14 @@
 {
-  "name": "web-jump",
+  "name": "kitty-jump",
   "version": "1.0.0",
-  "description": "jump game in web",
+  "description": "Kitty Jump — a free one-thumb cat jumping game you can play in the browser.",
   "keywords": [
+    "kitty jump",
+    "cat jump game",
+    "jump jump game",
     "three.js",
-    "jump",
-    "web"
+    "browser game",
+    "h5 game"
   ],
   "scripts": {
     "start": "webpack serve",

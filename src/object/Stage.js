@@ -44,7 +44,9 @@ function toCssColor (hex) {
 
 export default class Stage {
 
-  constructor () {
+  constructor (mount) {
+    // 画布挂到哪个元素里。不传就退回 body（命令行测试 / 单页场景）
+    this.mount = mount || document.body;
     // 场景
     this.scene = null;
     // 地面
@@ -219,7 +221,9 @@ export default class Stage {
       antialias:true // 抗锯齿
     });
     this.renderer.setSize(CLIENT_WIDTH, CLIENT_HEIGHT);
-    document.body.appendChild(this.renderer.domElement );
+    // 挂到游戏区里，而不是 document.body ——
+    // 首页右侧（手机上是下方）还有正文，画布不能占据整个页面
+    this.mount.appendChild(this.renderer.domElement);
     // 开启阴影
     this.renderer.shadowMap.enabled = true;
     // 设置设备像素

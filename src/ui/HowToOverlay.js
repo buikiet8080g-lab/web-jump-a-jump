@@ -31,8 +31,10 @@ const ILLUSTRATION = `
 
 export default class HowToOverlay {
 
-  constructor () {
+  constructor (mount) {
     this.overlay = null;
+    // 挂到游戏区里，浮层就不会盖住右侧正文
+    this.mount = mount || document.body;
 
     this.build();
 
@@ -109,7 +111,7 @@ export default class HowToOverlay {
     card.appendChild(tip);
     card.appendChild(button);
     overlay.appendChild(card);
-    document.body.appendChild(overlay);
+    this.mount.appendChild(overlay);
 
     this.overlay = overlay;
   }

@@ -26,14 +26,36 @@ const BASE_WIDTH = 100;
 
 // canvas 大小
 //
-// 竖版比例，最多 3:5：
+// 注意：游戏区**不再是整屏**。首页在桌面下是「左边游戏 + 右边说明」的两列布局，
+// 手机上虽然是一列，但画布下方还有正文。所以尺寸必须量**画布宿主元素**，
+// 不能直接取 window.innerHeight。
+//
+// 宿主必须有明确高度（CSS 里锁的是 100dvh）—— 用 dvh 而不是 vh 是因为手机上
+// 地址栏收起/展开会让 vh 跳动。
+//
+// 量不到时（宿主还没进 DOM / 还没布局）退回按视口算，规则和 CSS 的 3:5 一致：
 //   桌面（屏幕比 3:5 宽） → 保持 3:5，居中，两边露出页面底色
-//   手机（屏幕比 3:5 瘦） → 直接铺满宽度，整屏都是游戏区
-// 高度始终铺满视口（游戏区的渐变因此能上下贯通，不会被顶部标题截断）
-const VIEWPORT_WIDTH = window.innerWidth;
-const VIEWPORT_HEIGHT = window.innerHeight;
-const CLIENT_HEIGHT = VIEWPORT_HEIGHT;
-const CLIENT_WIDTH = VIEWPORT_HEIGHT * Math.min(3 / 5, VIEWPORT_WIDTH / VIEWPORT_HEIGHT);
+//   手机（屏幕比 3:5 瘦） → 直接铺满宽度
+function resolveGameViewport() {
+  if (typeof document !== 'undefined') {
+    const host = document.querySelector('[data-game-canvas]');
+
+    if (host) {
+      const rect = host.getBoundingClientRect();
+
+      if (rect.width > 0 && rect.height > 0) {
+        return { width: rect.width, height: rect.height };
+      }
+    }
+  }
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  return { width: vh * Math.min(3 / 5, vw / vh), height: vh };
+}
+
+const { width: CLIENT_WIDTH, height: CLIENT_HEIGHT } = resolveGameViewport();
 
 // 视图的宽高
 const WIDTH = BASE_WIDTH;

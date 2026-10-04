@@ -23,7 +23,7 @@ export default {
   // 故意不给贴图，全部走纯色 —— 顺便验证「没有贴图时退回纯色」这条路径
   textures: [],
   textureRatio: 0,
-  tileTextures: false,
+  fitTextures: false,
 
   // 只出立方体：验证主题能控制箱型权重
   boxWeights: { cube: 1, cylinder: 0, express: 0, magic: 0 },

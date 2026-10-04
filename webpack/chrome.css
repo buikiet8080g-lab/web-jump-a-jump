@@ -1,0 +1,318 @@
+/* ---------------------------------------------------------------------------
+   站点外壳样式
+   ---------------------------------------------------------------------------
+   这份 CSS 会被**内联进每个页面的 <head>**（见 webpack/layout.js）。
+
+   为什么不用 MiniCssExtractPlugin 产出一个 .css 文件：
+     内容页（/scoring /cats /tips）刻意做成**零 JS** —— 它们没有游戏逻辑，
+     加载 3.6MB 的游戏 bundle 纯属浪费，而且搜索引擎拿到的是「要跑 JS 才有
+     内容」的页面。把外壳样式直接写进 HTML，首屏也不用等任何请求。
+
+   游戏专用样式（画布、分数板、浮层）仍然在 src/index.css，跟随游戏 bundle。
+   所以这份文件里**不要**放游戏内部样式。
+--------------------------------------------------------------------------- */
+
+:root {
+  /* 页面底色：和游戏区的渐变刻意区分开，游戏区（画布）才有清晰边界 */
+  --page-bg: #ffffff;
+  --ink: #2b2733;
+  --ink-soft: #6b6478;
+  --line: #ece8f2;
+  --accent: #ee5568;
+  --accent-soft: #fff1f3;
+  --card: #faf8fd;
+  --wrap: 1120px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+  /* 界面文案是英文。以后要出中文版，在字体栈末尾补
+     "PingFang SC", "Microsoft YaHei" 即可 */
+}
+
+a { color: var(--accent); }
+
+/* ---------------- 顶部导航 ---------------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px max(16px, env(safe-area-inset-left));
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(160%) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.site-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  /* 名字不能折行 —— 折了会把导航挤成两行，手机上尤其明显 */
+  white-space: nowrap;
+}
+
+.site-header__logo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  overflow: hidden;
+  flex: none;
+}
+
+/* logo 是内联 SVG，没有 width/height 属性，靠这里控尺寸 */
+.site-header__logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.site-header__nav a {
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-header__nav a:hover { background: var(--card); color: var(--ink); }
+.site-header__nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------------- 内容容器 ---------------- */
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 max(16px, env(safe-area-inset-left));
+}
+
+main { display: block; }
+
+/* 内容页的正文排版 */
+.prose { max-width: 72ch; padding: 40px 0 64px; }
+
+.prose h1 {
+  font-size: clamp(28px, 4.6vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -0.022em;
+  margin: 0 0 14px;
+}
+
+.prose h2 {
+  font-size: clamp(20px, 2.6vw, 25px);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  margin: 44px 0 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.prose h3 { font-size: 18px; margin: 28px 0 8px; }
+
+.prose p { margin: 0 0 16px; }
+
+.prose ul, .prose ol { margin: 0 0 16px; padding-left: 22px; }
+
+.prose li { margin-bottom: 7px; }
+
+.prose strong { font-weight: 650; }
+
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.lede { font-size: 18px; color: var(--ink-soft); }
+
+/* 面包屑 */
+.crumbs {
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding: 18px 0 0;
+}
+
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
+.crumbs li + li::before { content: "/"; margin-right: 6px; color: var(--line); }
+.crumbs a { color: var(--ink-soft); }
+
+/* 卡片 / 提示块 */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin: 0 0 18px;
+}
+
+.card h3 { margin-top: 0; }
+
+/* 表格（计分规则用） */
+.table-scroll { overflow-x: auto; margin: 0 0 20px; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 15px;
+}
+
+th, td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th { font-weight: 650; color: var(--ink-soft); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* 猫种卡片网格 */
+.breed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.breed {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.breed h3 { margin: 0 0 6px; font-size: 17px; }
+.breed p { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+.breed .swatch {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 4px;
+  margin-right: 7px;
+  vertical-align: -1px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* FAQ */
+.faq { margin: 0; }
+.faq dt { font-weight: 650; margin-top: 18px; }
+.faq dd { margin: 5px 0 0; color: var(--ink-soft); }
+
+/* 页脚 */
+.site-footer {
+  border-top: 1px solid var(--line);
+  margin-top: 48px;
+  padding: 26px max(16px, env(safe-area-inset-left)) 40px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.site-footer a { color: var(--ink-soft); }
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; }
+
+/* ---------------------------------------------------------------------------
+   首页：桌面「左边游戏 + 右边说明」，手机「上面游戏 + 下面说明」
+   ---------------------------------------------------------------------------
+   游戏区高度锁死为 100dvh（不是 100vh）—— 手机上 100vh 会在地址栏
+   收起/展开时跳动，dvh 跟着实际可视高度走。
+   左右两列在同一个 100dvh 容器里，所以右边说明可以独立滚动。
+--------------------------------------------------------------------------- */
+
+.home-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.game-column {
+  height: 100dvh;
+  min-height: 420px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* 画布宿主：高度铺满、宽度最多按 3:5，宽了就缩回来居中 */
+.game-stage {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 3 / 5;
+  max-width: 100%;
+}
+
+.game-stage canvas { display: block; }
+
+.home-copy { padding: 40px 0 64px; }
+.home-copy h1 { font-size: clamp(26px, 3.4vw, 34px); margin: 0 0 14px; letter-spacing: -0.02em; line-height: 1.22; }
+.home-copy h2 { font-size: 21px; margin: 40px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+.home-copy h2:first-of-type { border-top: 0; padding-top: 0; margin-top: 30px; }
+.home-copy ol, .home-copy ul { padding-left: 22px; margin: 0 0 16px; }
+.home-copy li { margin-bottom: 8px; }
+
+@media (min-width: 900px) {
+  .home-main {
+    grid-template-columns: minmax(0, auto) minmax(340px, 1fr);
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .game-column { height: 100dvh; }
+
+  .home-copy {
+    height: 100dvh;
+    overflow-y: auto;
+    padding: 34px 36px 64px;
+    max-width: none;
+  }
+
+  .home-copy-inner { max-width: 62ch; }
+}
+
+@media (max-width: 899px) {
+  .game-column { height: auto; }
+  .game-stage { height: 100dvh; max-height: 100dvh; }
+}
+
+/* 窄屏：导航收一收，保证「logo + 名字 + 4 个链接」能排成一行 */
+@media (max-width: 560px) {
+  .site-header { gap: 10px; padding-top: 9px; padding-bottom: 9px; }
+  .site-header__brand { font-size: 15px; gap: 7px; }
+  .site-header__logo { width: 24px; height: 24px; }
+  .site-header__nav { gap: 0; }
+  .site-header__nav a { padding: 5px 8px; font-size: 13px; }
+}

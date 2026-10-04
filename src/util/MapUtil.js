@@ -45,20 +45,26 @@ function recreateCubeUV(textureWidth, textureHeight, geometry, faceIndex, x1, y1
 }
 
 /**
- * 按倍数缩放 UV，实现「纹理平铺」而不是「拉伸铺满」。
+ * 把 UV 以 (0.5, 0.5) 为中心做等比缩放。
  *
- * 为什么需要：箱子高度是固定的（Box.defaultHeight），但底面尺寸是随机的
- * （12.5 ~ 33.3）。如果 UV 一直保持 0~1，同一张贴图会被拉伸成 0.75:1 ~ 2:1
- * 的各种比例 —— 箱子一大一小看起来就不像同一种材质了。
+ * 为什么不是像平铺那样直接从 0 乘：
+ *   直接乘（uScale=3）是「平铺」语义 —— 同一个图案在面上出现 3 次；
+ *   以中心缩放是「取贴图中间的一块」语义 —— 图案只出现一次，且居中。
  *
- * 缩放之后「一个纹理块的物理尺寸」恒定，箱子变大只是多铺几块。
+ * 典型用法是让「一个纹理单位 = 方块高度」：
+ *   侧面（size 宽 × height 高）→ u 方向乘 size/height、v 方向乘 1
+ * 这样图案在**物理尺寸上是正方形**。方块大小变化只是周围留白多少不同，
+ * 不会把图案拉变形，也不会铺成一堆小图。
+ *
+ * UV 超出 0~1 的部分靠贴图的 ClampToEdge 采样到边缘像素（＝全透明，alpha = 0），
+ * 所以不会重复。这些区域的底色怎么补上见 util/MaterialUtil.js。
  *
  * @param {BufferGeometry} geometry
- * @param {number} uScale        U 方向倍数
- * @param {number} vScale        V 方向倍数
+ * @param {number} uScale        U 方向倍数（相对中心）
+ * @param {number} vScale        V 方向倍数（相对中心）
  * @param {number[]} [range]     只处理顶点区间 [start, end)；不传则处理全部
  */
-function tileUV(geometry, uScale, vScale = 1, range = null) {
+function fitUV(geometry, uScale, vScale = 1, range = null) {
   const uv = geometry.attributes && geometry.attributes.uv;
   if (!uv) return;
 
@@ -66,31 +72,28 @@ function tileUV(geometry, uScale, vScale = 1, range = null) {
   const end = range ? range[1] : uv.count;
 
   for (let i = start; i < end; i++) {
-    uv.setX(i, uv.getX(i) * uScale);
-    uv.setY(i, uv.getY(i) * vScale);
+    uv.setX(i, (uv.getX(i) - 0.5) * uScale + 0.5);
+    uv.setY(i, (uv.getY(i) - 0.5) * vScale + 0.5);
   }
   uv.needsUpdate = true;
 }
 
 /**
- * 对立方体指定面做 UV 平铺。
+ * 对立方体指定面做「居中适配」。
  *
  * BoxGeometry 的面顺序与上面的常量一致，每面 4 个顶点（默认 1 个分段），
  * 所以第 f 个面的顶点区间就是 [f*4, f*4+4)。
  */
-function tileCubeFaces(geometry, faceIndices, uScale, vScale = 1) {
-  const uv = geometry.attributes && geometry.attributes.uv;
-  if (!uv) return;
-
+function fitCubeFaces(geometry, faceIndices, uScale, vScale = 1) {
   faceIndices.forEach((faceIndex) => {
-    tileUV(geometry, uScale, vScale, [faceIndex * 4, faceIndex * 4 + 4]);
+    fitUV(geometry, uScale, vScale, [faceIndex * 4, faceIndex * 4 + 4]);
   });
 }
 
 export {
   recreateCubeUV,
-  tileUV,
-  tileCubeFaces,
+  fitUV,
+  fitCubeFaces,
   RIGHT,
   LEFT,
   TOP,

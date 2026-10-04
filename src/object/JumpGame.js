@@ -6,8 +6,8 @@ import {scoreJump} from '../util/Scoring';
 import HowToOverlay from '../ui/HowToOverlay';
 import ScoreBoard from '../ui/ScoreBoard';
 
-// 品牌素材（webpack 处理后文件名带 hash，所以只能 import 进来拿 URL）
-import logoUrl from '../res/brand/logo.svg';
+// 页面图标素材（webpack 处理后文件名带 hash，所以只能 import 进来拿 URL）
+// 注意：logo.svg 不在这里 —— 顶部品牌行是静态 HTML，logo 直接内联在页面里
 import favicon32 from '../res/brand/icon-32.png';
 import favicon64 from '../res/brand/icon-64.png';
 import favicon192 from '../res/brand/icon-192.png';
@@ -29,11 +29,17 @@ export default class JumpGame {
   }
 
   init() {
-    // 先把页面外壳（页面图标 + 顶部标题 + 分数板）搭好，用户不用等 WebGL 初始化
+    // 游戏挂到哪里。首页里有这个宿主元素（见 webpack/pages/home.js），
+    // 量不到就退回 body —— 这样在别处复用也不会直接挂掉
+    this.mount = document.querySelector('[data-game-canvas]') || document.body;
+
+    // 先把页面图标和分数板搭好，用户不用等 WebGL 初始化。
+    // 品牌行（logo + 游戏名）不在这里了 —— 它变成页面导航栏的一部分，
+    // 静态写在 HTML 里（见 webpack/layout.js），内容页和游戏页共用一份。
     this.scoreBoard = new ScoreBoard();
     this.initBranding();
     // 初始化舞台
-    this.stage = new Stage();
+    this.stage = new Stage(this.mount);
     // 初始化盒子
     this.initBoxes();
     // 初始化小人
@@ -43,7 +49,7 @@ export default class JumpGame {
     // 初始化结束提示
     this.initOverlay();
     // 首次进入的玩法提示（只在第一次打开时显示，记在 localStorage）
-    this.howTo = new HowToOverlay();
+    this.howTo = new HowToOverlay(this.mount);
   }
 
   initBoxes() {
@@ -85,11 +91,12 @@ export default class JumpGame {
     });
   }
 
-  // ---------------- 品牌：页面图标 + 顶部标题栏 ----------------
+  // ---------------- 品牌：页面图标 ----------------
 
   initBranding() {
     this.initFavicon();
-    this.initHeader();
+    // 分数板直接叠在游戏区上，没有自己的背景色
+    this.mount.appendChild(this.scoreBoard.element);
   }
 
   /**
@@ -114,37 +121,8 @@ export default class JumpGame {
     });
   }
 
-  // 顶部：品牌行（logo + 游戏名）+ 分数板
-  // 两者都直接叠在游戏区上，没有自己的背景色
-  initHeader() {
-    const header = document.createElement('header');
-    header.className = 'game-header';
-
-    const brand = document.createElement('div');
-    brand.className = 'game-header__brand';
-
-    const logo = document.createElement('img');
-    logo.className = 'game-header__logo';
-    logo.src = logoUrl;
-    logo.alt = '';
-    logo.width = 30;
-    logo.height = 30;
-
-    const name = document.createElement('span');
-    name.className = 'game-header__name';
-    // 名字只留一处来源：webpack.config.js 里 HtmlWebpackPlugin 的 title
-    name.textContent = document.title;
-
-    brand.appendChild(logo);
-    brand.appendChild(name);
-    header.appendChild(brand);
-
-    // 分数板挂在品牌行下面
-    header.appendChild(this.scoreBoard.element);
-    document.body.appendChild(header);
-
-    this.header = header;
-  }
+  // 顶部品牌行已移到静态 HTML（见 webpack/layout.js），这里不再生成。
+  // 分数板挂在游戏区里，由 initBranding 处理。
 
   // ---------------- 结束提示 ----------------
 
@@ -191,7 +169,7 @@ export default class JumpGame {
     card.appendChild(stats);
     card.appendChild(button);
     overlay.appendChild(card);
-    document.body.appendChild(overlay);
+    this.mount.appendChild(overlay);
 
     this.overlayScore = scoreValue;
     this.overlayBest = bestValue;

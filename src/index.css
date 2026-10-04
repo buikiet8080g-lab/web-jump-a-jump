@@ -1,15 +1,15 @@
 :root {
-    /* 网页底色：和游戏区的糖果渐变刻意区分开，游戏区（画布）才有清晰的边界。
+    /* 网页底色：和游戏区的渐变刻意区分开，游戏区（画布）才有清晰的边界。
        ⚠️ 别把它也做成主题那条渐变 —— 那样两侧和画布同色，游戏区就“消失”了。 */
     --page-bg: #ffffff;
 }
 
+/* 注意：这里**只**管游戏内部。
+   body / 导航栏 / 正文排版 / 页脚这些「站点外壳」的样式在
+   webpack/chrome.css，会被内联进每个页面（含零 JS 的内容页）。
+   两边都写 body 规则会互相覆盖 —— 早期这里写过 display: flex，
+   结果把整页变成横向 flex 容器，两列布局整个错位。 */
 body{
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
     background: var(--page-bg);
     /* 界面文案是英文，用西文字体优先的字体栈；
        （如果以后要出中文版，在末尾补 "PingFang SC"、"Microsoft YaHei" 即可） */
@@ -29,53 +29,21 @@ canvas {
    必须 pointer-events: none —— 否则会挡住画布上的蓄力点击。
    --------------------------------------------------------------------------- */
 
-.game-header {
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: 0;
-    /* 品牌行在上、分数板在下 */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding-top: 12px;
-    background: transparent;
-    pointer-events: none;
-    z-index: 5;
-}
-
-.game-header__brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.game-header__logo {
-    display: block;
-    width: 30px;
-    height: 30px;
-    /* 用 drop-shadow 而不是 box-shadow：logo 是圆角图形，
-       box-shadow 会按元素矩形投影，四角会多出一块方影 */
-    filter: drop-shadow(0 2px 4px rgba(238, 85, 104, .30));
-}
-
-.game-header__name {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: .02em;
-    color: #5b4a63;
-}
-
-/* ---------------------------------------------------------------------------
-   分数板（HUD）
-   --------------------------------------------------------------------------- */
-
 .scoreboard {
-    position: relative;
+    /* 叠在游戏区顶部。这里从 position: fixed 改成 absolute ——
+       游戏区不再是整屏了（首页右边/下面是正文），固定定位会跑到正文头上。 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 5;
     display: flex;
     align-items: baseline;
+    justify-content: center;
     gap: 8px;
+    padding-top: 12px;
+    /* 必须 pointer-events: none —— 否则会挡住画布上的蓄力点击 */
+    pointer-events: none;
 }
 
 .scoreboard__score {
@@ -147,7 +115,9 @@ canvas {
 
 .game-over,
 .how-to {
-    position: fixed;
+    /* absolute 而不是 fixed：把浮层关在游戏区里。
+       桌面下右侧是正文，fixed 会把弹层盖到正文上。 */
+    position: absolute;
     top: 0;
     right: 0;
     bottom: 0;

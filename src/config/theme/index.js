@@ -7,20 +7,20 @@
 // 想加主题 = 在 theme/ 下新建一个同结构的文件，注册进 THEMES 即可。
 // ---------------------------------------------------------------------------
 
-import candy from './candy';
+import kitty from './kitty';
 import fixture from './_fixture';
 
 export const THEMES = {
-  candy,
+  kitty,
   fixture,
 };
 
 // 当前激活的主题
-const ACTIVE_THEME_ID = 'candy';
+const ACTIVE_THEME_ID = 'kitty';
 
 // 用函数而不是直接导出对象：以后想加「运行时切换主题 / 调试面板」不用改调用方
 export function getTheme() {
-  return THEMES[ACTIVE_THEME_ID] || candy;
+  return THEMES[ACTIVE_THEME_ID] || kitty;
 }
 
 export default getTheme();

@@ -1,6 +1,7 @@
 import {
   SphereGeometry,
   CylinderGeometry,
+  ConeGeometry,
   MeshLambertMaterial,
   Geometry,
   Group,
@@ -90,8 +91,9 @@ class LittleMan {
 
   // 头部
   initHead() {
-    // 球缓冲几何体
-    const headGeometry = new SphereGeometry(LITTLE_MAN_WIDTH/2, 40, 40);
+    // 头比原来大一圈（0.5W → 0.62W）：
+    // 猫的比例就是「大圆头 + 矮圆身」，头小了会看着像国际象棋棋子。
+    const headGeometry = new SphereGeometry(LITTLE_MAN_WIDTH * 0.62, 40, 40);
 
     this.head = new Mesh(headGeometry, this.headMaterial);
     // 小人也能投射阴影
@@ -99,6 +101,45 @@ class LittleMan {
 
     // 头部向上移动
     this.head.translateY(LITTLE_MAN_HEIGHT);
+
+    // 耳朵：猫最关键的剪影特征。
+    // 特意不做眼睛/鼻子 —— 小人在屏幕上只有 30px 左右，五官根本看不清，
+    // 只有「圆头 + 一对三角耳」这个轮廓在小尺寸下能读出来。
+    this.initEars();
+  }
+
+  // 猫耳朵：作为头部的子物体，这样蓄力时头部下移、耳朵会跟着走
+  initEars() {
+    // 耳朵要**短而宽**——尖长的三角会看着像犄角，猫耳是矮胖的三角
+    const earRadius = LITTLE_MAN_WIDTH * 0.26;
+    const earHeight = LITTLE_MAN_WIDTH * 0.52;
+    const tilt = Math.PI / 9;
+
+    // 相机是从「左上前方」45° 看的，屏幕水平方向约等于 (x, 0, z) 的对角线。
+    // 所以耳朵必须沿这条对角线放 —— 只放在 ±x 轴上的话，
+    // 靠后的那只会被头完全挡住，看着只有一只耳朵。
+    const spread = LITTLE_MAN_WIDTH * 0.20;
+    const lift = LITTLE_MAN_WIDTH * 0.515;
+
+    [-1, 1].forEach((side) => {
+      const geometry = new ConeGeometry(earRadius, earHeight, 16);
+
+      // 圆锥的原点在中心，先把它抬起来，让**底面**落在局部原点，
+      // 这样 position 就正好是耳朵贴在头顶的位置。
+      geometry.translate(0, earHeight / 2, 0);
+
+      // 耳朵用身体的毛色而不是头部的颜色：
+      // 同色贴在球面上会把边界完全隐藏掉，只剩两个小鼓包；
+      // 耳朵用深一档的颜色（现实中猫也常常耳尖颜色更深），轮廓才出得来
+      const ear = new Mesh(geometry, this.bodyMaterial);
+
+      ear.position.set(side * spread, lift, side * spread);
+      // 往外（朝 (x,0,z) 斜对角）翘一点，不然两根耳朵会显得很呆
+      ear.rotation.set(side * tilt, 0, -side * tilt);
+      ear.castShadow = true;
+
+      this.head.add(ear);
+    });
   }
 
   // 躯干
@@ -121,10 +162,10 @@ class LittleMan {
     // 向上移动到和球体相切
     trunkCenterGeometry.translate(0, trunkHeight / 8 * 7, 0);
 
-    // 下方圆柱
+    // 下方圆柱（底部喇叭形收一点，太宽会像裙摆）
     const trunkBottomGeometry = new CylinderGeometry(
       LITTLE_MAN_WIDTH/2 * .8,
-      LITTLE_MAN_WIDTH/2 * 1.3,
+      LITTLE_MAN_WIDTH/2 * 1.12,
       trunkHeight/4 * 3,
       40
     );

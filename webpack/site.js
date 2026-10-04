@@ -1,0 +1,42 @@
+// ---------------------------------------------------------------------------
+// 站点常量
+//
+// 换域名只改 SITE.url 这一行 —— canonical、og:url、sitemap.xml、JSON-LD
+// 全部从它派生。
+// ---------------------------------------------------------------------------
+
+const SITE = {
+  name: 'Kitty Jump',
+
+  // 站点根地址。canonical、og:url、sitemap.xml、JSON-LD 全部从它派生，
+  // 所以**这个值必须和实际上线地址一致**，否则搜索引擎会收到互相矛盾的信号。
+  //
+  // 用环境变量注入，因为不同托管方式的地址不一样，同一条构建命令都能用：
+  //   Cloudflare Pages: SITE_URL=https://kittyjump.pages.dev npm run build
+  //   GitHub Pages(项目页): SITE_URL=https://<user>.github.io/<repo> npm run build
+  //   自有域名:         SITE_URL=https://yourdomain.com npm run build
+  url: (process.env.SITE_URL || 'https://kittyjump.pages.dev').replace(/\/+$/, ''),
+
+  tagline: 'A free one-thumb cat jumping game you can play in the browser.',
+  // 社交分享图，1200×630
+  ogImage: '/og.png',
+  themeColor: '#ee5568',
+};
+
+// 导航。顺序 = 展示顺序，也用来判断「当前页」
+const NAV = [
+  { path: '', label: 'Play' },
+  { path: 'scoring', label: 'Scoring' },
+  { path: 'cats', label: 'Cats' },
+  { path: 'tips', label: 'Tips' },
+];
+
+// 面包屑名字（"Play" 一页就是首页，不出现在面包屑里）
+const CRUMB = { scoring: 'Scoring', cats: 'Cats', tips: 'Tips' };
+
+/** 把页面路径拼成绝对 URL，'' → 站点根 */
+function absolute(pagePath) {
+  return pagePath ? `${SITE.url}/${pagePath}` : `${SITE.url}/`;
+}
+
+module.exports = { SITE, NAV, CRUMB, absolute };

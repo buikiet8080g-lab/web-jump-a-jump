@@ -101,8 +101,11 @@ class Box {
         const url = textures[Math.floor(Math.random() * textures.length)];
 
         this.texture = getTexture(url);
-        // 贴图时底色设白，否则 color 会和 map 相乘、把图染脏
-        this.color = 0xffffff;
+        // 贴图现在是「透明底 + 图案」两层，底色照样要摇：
+        // 它决定箱子的颜色，图案只是盖在上面的一层。
+        // （旧实现把底色固定成白色，是因为只有一张不透明贴图、
+        //   底色会和 map 相乘把图染脏 —— 现在不存在这个问题了）
+        this.color = colors[Math.floor(Math.random() * colors.length)];
       } else {
         this.texture = null;
         this.color = colors[Math.floor(Math.random() * colors.length)];
