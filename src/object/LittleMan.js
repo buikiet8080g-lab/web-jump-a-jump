@@ -65,6 +65,10 @@ class LittleMan {
     this.dead = false;
     // 游戏结束回调，由 JumpGame 注入
     this.onGameOver = null;
+    // 跳中一下的回调（拿去做计分），由 JumpGame 注入
+    this.onScore = null;
+    // 这一跳落点离目标方块中心的距离，在 calculateState 里算好
+    this.landingOffset = 0;
 
     this.init();
   }
@@ -226,6 +230,20 @@ class LittleMan {
     this.eventTarget = null;
   }
 
+  // 把这一跳的结算数据交给上层计分
+  reportScore () {
+    if (!this.onScore || !this.box || !this.box.next) return;
+
+    this.onScore({
+      // 间距：这一跳跨过的空隙
+      gap: this.box.distance,
+      // 落点方块的宽度 —— 成功判定窗口的宽度就是它
+      targetSize: this.box.next.size,
+      // 落点离该方块中心的距离
+      offsetFromCenter: this.landingOffset,
+    });
+  }
+
   // 本局结束（出界 / 坠落）
   die () {
     if (this.dead) return;
@@ -319,6 +337,11 @@ class LittleMan {
 
     // 跳到了下个盒子
     if (state === LittleMan.STATE.nextBox) {
+      // ⚠️ 结算必须放在 createBox() **之前**：
+      //    createBox() 会新建一个盒子并重排链表，之后就取不到
+      //    「刚才那一跳」的间距和落点尺寸了。
+      this.reportScore();
+
       // 创建一个新的盒子
       const last = this.boxGroup.createBox();
       this.box = last.prev;
@@ -543,6 +566,10 @@ class LittleMan {
     // 下一个盒子近点和远点距离
     const nextNearEdge = currentEdge + distance;
     const nextFarEdge = nextNearEdge + nextSize;
+
+    // 落点离「目标方块中心」的距离 —— 结算得分时判「完美落点」要用。
+    // 放在这里算，是因为只有这里才知道 currentEdge 这些中间量。
+    this.landingOffset = Math.abs(jumpDistance - (nextNearEdge + nextSize / 2));
 
     // 没有跳出当前盒子的范围
     if (jumpDistance < currentEdge) {

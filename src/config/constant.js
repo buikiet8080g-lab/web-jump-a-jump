@@ -70,6 +70,22 @@ const PARTICLE_MIN_DISTANCE = LITTLE_MAN_WIDTH/2;
 const PARTICLE_MAX_DISTANCE = LITTLE_MAN_HEIGHT/1.5;
 
 
+// ---------------- 计分 ----------------
+// 计分规则集中在 util/Scoring.js，这里只放可调的旋钮。
+
+// 单跳「难度分」的区间
+const SCORE_MIN = 1;
+const SCORE_MAX = 10;
+
+// 连击倍率：每多一连击 +0.1，最多加到 +1.0（即最高 ×2.0）
+const SCORE_COMBO_STEP = 0.1;
+const SCORE_COMBO_CAP = 10;
+
+// 落点离方块中心的距离在「方块宽度 × 这个比例」以内，算「完美落点」
+const PERFECT_RADIUS_RATIO = 0.15;
+// 完美奖励递增：连续第 1 次 +1、第 2 次 +2 …… 封顶
+const PERFECT_BONUS_CAP = 10;
+
 // 拖尾碎片宽度,表示精度
 const TAIL_WIDTH = 1;
 // 拖尾碎片最大高度
@@ -100,6 +116,12 @@ export {
   PARTICLE_NUM,
   PARTICLE_MIN_DISTANCE,
   PARTICLE_MAX_DISTANCE,
+  SCORE_MIN,
+  SCORE_MAX,
+  SCORE_COMBO_STEP,
+  SCORE_COMBO_CAP,
+  PERFECT_RADIUS_RATIO,
+  PERFECT_BONUS_CAP,
   TAIL_WIDTH,
   TAIL_HEIGHT,
   TAIL_DURATION,

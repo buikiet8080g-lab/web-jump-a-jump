@@ -2,7 +2,9 @@ import Stage from './Stage';
 import BoxGroup from './BoxGroup';
 import LittleMan from './LittleMan';
 import {setFrameAction} from '../util/TweenUtil';
+import {scoreJump} from '../util/Scoring';
 import HowToOverlay from '../ui/HowToOverlay';
+import ScoreBoard from '../ui/ScoreBoard';
 
 // 品牌素材（webpack 处理后文件名带 hash，所以只能 import 进来拿 URL）
 import logoUrl from '../res/brand/logo.svg';
@@ -27,7 +29,8 @@ export default class JumpGame {
   }
 
   init() {
-    // 先把页面外壳（页面图标 + 顶部标题栏）搭好，用户不用等 WebGL 初始化
+    // 先把页面外壳（页面图标 + 顶部标题 + 分数板）搭好，用户不用等 WebGL 初始化
+    this.scoreBoard = new ScoreBoard();
     this.initBranding();
     // 初始化舞台
     this.stage = new Stage();
@@ -64,6 +67,17 @@ export default class JumpGame {
 
     // 本局结束（掉下去）时弹提示
     this.littleMan.onGameOver = () => this.showOverlay();
+    // 跳中一下 → 结算得分
+    this.littleMan.onScore = (jump) => this.scoreBoard.addJump(
+      scoreJump({
+        gap: jump.gap,
+        targetSize: jump.targetSize,
+        offsetFromCenter: jump.offsetFromCenter,
+        // 连击数含当前这一跳，所以要 +1
+        combo: this.scoreBoard.combo + 1,
+        perfectCombo: this.scoreBoard.perfectCombo,
+      })
+    );
 
     // 更新盒子和小人的位置
     this.boxGroup.updatePosition({
@@ -100,10 +114,14 @@ export default class JumpGame {
     });
   }
 
-  // 顶部标题栏：logo + 游戏名
+  // 顶部：品牌行（logo + 游戏名）+ 分数板
+  // 两者都直接叠在游戏区上，没有自己的背景色
   initHeader() {
     const header = document.createElement('header');
     header.className = 'game-header';
+
+    const brand = document.createElement('div');
+    brand.className = 'game-header__brand';
 
     const logo = document.createElement('img');
     logo.className = 'game-header__logo';
@@ -117,8 +135,12 @@ export default class JumpGame {
     // 名字只留一处来源：webpack.config.js 里 HtmlWebpackPlugin 的 title
     name.textContent = document.title;
 
-    header.appendChild(logo);
-    header.appendChild(name);
+    brand.appendChild(logo);
+    brand.appendChild(name);
+    header.appendChild(brand);
+
+    // 分数板挂在品牌行下面
+    header.appendChild(this.scoreBoard.element);
     document.body.appendChild(header);
 
     this.header = header;
@@ -147,17 +169,63 @@ export default class JumpGame {
     button.textContent = 'Play Again';
     button.addEventListener('click', () => this.restart());
 
+    // 本局成绩
+    const stats = document.createElement('div');
+    stats.className = 'game-over__stats';
+
+    const scoreValue = document.createElement('strong');
+    scoreValue.className = 'game-over__stat-value';
+
+    const bestValue = document.createElement('strong');
+    bestValue.className = 'game-over__stat-value';
+
+    const newBest = document.createElement('em');
+    newBest.className = 'game-over__new-best';
+    newBest.textContent = 'NEW BEST';
+
+    stats.appendChild(this.makeStatRow('Score', scoreValue));
+    stats.appendChild(this.makeStatRow('Best', bestValue, newBest));
+
     card.appendChild(title);
     card.appendChild(desc);
+    card.appendChild(stats);
     card.appendChild(button);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
 
+    this.overlayScore = scoreValue;
+    this.overlayBest = bestValue;
+    this.overlayNewBest = newBest;
+
     this.overlay = overlay;
   }
 
+  // 结算卡片里的一行「标签 + 数值 [+ 附加标记]」
+  makeStatRow (label, value, extra) {
+    const row = document.createElement('div');
+    row.className = 'game-over__stat';
+
+    const name = document.createElement('span');
+    name.className = 'game-over__stat-label';
+    name.textContent = label;
+
+    row.appendChild(name);
+    row.appendChild(value);
+    if (extra) row.appendChild(extra);
+
+    return row;
+  }
+
   showOverlay() {
-    if (this.overlay) this.overlay.classList.add('is-visible');
+    if (!this.overlay) return;
+
+    const {score, best, beatBest} = this.scoreBoard;
+
+    this.overlayScore.textContent = String(score);
+    this.overlayBest.textContent = String(best);
+    this.overlayNewBest.classList.toggle('is-on', beatBest);
+
+    this.overlay.classList.add('is-visible');
   }
 
   hideOverlay() {
@@ -168,6 +236,9 @@ export default class JumpGame {
 
   restart() {
     this.hideOverlay();
+
+    // 本局分数清零（最高分保留）
+    this.scoreBoard.reset();
 
     // 1) 拆掉上一局
     //    解绑小人身上的输入监听（否则每重开一次就多挂一份）

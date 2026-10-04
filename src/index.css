@@ -34,14 +34,21 @@ canvas {
     top: 0;
     right: 0;
     left: 0;
-    height: 64px;
+    /* 品牌行在上、分数板在下 */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
+    gap: 4px;
+    padding-top: 12px;
     background: transparent;
     pointer-events: none;
     z-index: 5;
+}
+
+.game-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .game-header__logo {
@@ -58,6 +65,80 @@ canvas {
     font-weight: 700;
     letter-spacing: .02em;
     color: #5b4a63;
+}
+
+/* ---------------------------------------------------------------------------
+   分数板（HUD）
+   --------------------------------------------------------------------------- */
+
+.scoreboard {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.scoreboard__score {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #5b4a63;
+    /* 数字等宽：分数跳动时不会左右抖 */
+    font-variant-numeric: tabular-nums;
+    transition: color .2s ease;
+}
+
+/* 破了纪录就把当前分标成树莓红 */
+.scoreboard__score.is-best {
+    color: #f0455f;
+}
+
+/* 连击倍率：第 2 跳起才显示 */
+.scoreboard__combo {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f0455f;
+    opacity: 0;
+    transition: opacity .18s ease;
+    font-variant-numeric: tabular-nums;
+}
+
+.scoreboard__combo.is-on {
+    opacity: 1;
+}
+
+.scoreboard__best {
+    font-size: 12.5px;
+    color: #9b8fa3;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 得分飘字：每次得分从分数下面冒一个 +N 出来 */
+.scoreboard__pop {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    margin-top: 2px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 700;
+    color: #b9a7c9;
+    opacity: 0;
+}
+
+.scoreboard__pop.is-perfect {
+    color: #f0455f;
+}
+
+.scoreboard__pop.is-on {
+    animation: score-pop .9s ease-out;
+}
+
+@keyframes score-pop {
+    0%   { opacity: 0; transform: translate(-50%, 2px); }
+    25%  { opacity: 1; transform: translate(-50%, -2px); }
+    100% { opacity: 0; transform: translate(-50%, -18px); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -161,6 +242,51 @@ canvas {
     margin-top: 8px;
     font-size: 13px;
     color: #9b8fa3;
+}
+
+/* 结算卡片里的本局成绩 */
+.game-over__stats {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #fdf3f6;
+}
+
+.game-over__stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 13px;
+    color: #9b8fa3;
+}
+
+.game-over__stat + .game-over__stat {
+    margin-top: 6px;
+}
+
+.game-over__stat-value {
+    /* 数值靠右对齐 */
+    margin-left: auto;
+    font-size: 17px;
+    font-weight: 700;
+    color: #5b4a63;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-over__new-best {
+    display: none;
+    font-style: normal;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #fff;
+    background: #f0455f;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
+.game-over__new-best.is-on {
+    display: inline-block;
 }
 
 /* --- 玩法提示独有 --- */
