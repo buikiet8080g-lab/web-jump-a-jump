@@ -22,6 +22,12 @@
   --accent-soft: #fff1f3;
   --card: #faf8fd;
   --wrap: 1120px;
+  /* 顶部导航栏的实际高度（sticky，永远占着顶部）。
+     首页游戏区要按「视口高 - 导航高」来定高，才能一屏放得下。
+     数值 = 上下 padding(12+12) + 导航链接行高(14×1.4+12≈32) + 1px 边框。
+     链接的 line-height 在下面锁成 1.4，就是为了让这个数可预测 ——
+     别改那行而不改这里，两者必须对得上。 */
+  --header-h: 57px;
 }
 
 * { box-sizing: border-box; }
@@ -48,13 +54,26 @@ a { color: var(--accent); }
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 12px max(16px, env(safe-area-inset-left));
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: saturate(160%) blur(10px);
   border-bottom: 1px solid var(--line);
+}
+
+/* header 内容容器。
+   默认跟 .wrap 同宽 —— 也就是内容页的正文容器，所以：
+     logo 左边缘 = 面包屑 / 正文左边缘
+     导航右边缘 = 内容区右边缘
+   首页桌面下会被覆盖成「游戏 + 说明」那套列（见下面 @media）。
+   注意：背景 / 下边框 / sticky 留在 .site-header 上，所以导航条仍然通栏，
+   只有里面的内容是内缩的。 */
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 12px max(16px, env(safe-area-inset-left));
 }
 
 .site-header__brand {
@@ -98,6 +117,8 @@ a { color: var(--accent); }
   padding: 6px 11px;
   border-radius: 999px;
   font-size: 14px;
+  /* 锁死行高：头部总高必须可预测，--header-h 才是准的（见 :root 注释） */
+  line-height: 1.4;
   font-weight: 500;
   color: var(--ink-soft);
   text-decoration: none;
@@ -247,9 +268,13 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* ---------------------------------------------------------------------------
    首页：桌面「左边游戏 + 右边说明」，手机「上面游戏 + 下面说明」
    ---------------------------------------------------------------------------
-   游戏区高度锁死为 100dvh（不是 100vh）—— 手机上 100vh 会在地址栏
-   收起/展开时跳动，dvh 跟着实际可视高度走。
-   左右两列在同一个 100dvh 容器里，所以右边说明可以独立滚动。
+   高度用 dvh（不是 vh）—— 手机上 100vh 会在地址栏收起/展开时跳动，
+   dvh 跟着实际可视高度走；再减去 --header-h，因为顶部导航一直占着地方，
+   不减掉的话「导航 + 游戏」就超过一屏了。
+
+   说明列**不再自己滚动**：文字有多长就往下排，滚动交给页面本身。
+   之前是「游戏列 100dvh + 说明列独立 overflow，外层再 100dvh overflow:hidden」，
+   结果右侧同时出现内外两条滚动条。
 --------------------------------------------------------------------------- */
 
 .home-main {
@@ -259,7 +284,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 }
 
 .game-column {
-  height: 100dvh;
+  height: calc(100dvh - var(--header-h));
   min-height: 420px;
   display: flex;
   justify-content: center;
@@ -267,7 +292,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
   overflow: hidden;
 }
 
-/* 画布宿主：高度铺满、宽度最多按 3:5，宽了就缩回来居中 */
+/* 画布宿主：高度铺满、宽度按 3:5，宽了就缩回来居中 */
 .game-stage {
   position: relative;
   height: 100%;
@@ -285,32 +310,63 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .home-copy li { margin-bottom: 8px; }
 
 @media (min-width: 900px) {
-  .home-main {
-    grid-template-columns: minmax(0, auto) minmax(340px, 1fr);
-    height: 100dvh;
-    overflow: hidden;
+  /* 首页两列的几何参数集中在这里：header 和 .home-main 用的是**同一套**
+     列宽 / 间距，这样 logo 才能正好对齐游戏面板左边、导航右对齐文字列右边。
+     两个 grid 各自独立计算，所以列宽必须写成具体值 —— 用 auto 的话
+     header 的 auto = logo 宽度、main 的 auto = 游戏面板宽度，对不上。
+     --home-game-w = 游戏列高度 × 3/5，和 .game-stage 的 aspect-ratio 一致。 */
+  :root {
+    --home-gap: clamp(28px, 4vw, 56px);
+    --home-copy-w: 62ch;
+    --home-game-w: calc((100dvh - var(--header-h)) * 3 / 5);
   }
 
-  .game-column { height: 100dvh; }
+  /* 游戏 + 说明当成一整块居中，两边各留一样的空白。
+     用 justify-content: center 而不是给某一列 1fr —— 后者会把多余宽度
+     全塞给说明列，文字靠左、右边空一大截。 */
+  .home-main {
+    grid-template-columns: minmax(0, var(--home-game-w)) minmax(0, var(--home-copy-w));
+    justify-content: center;
+    column-gap: var(--home-gap);
+    align-items: start;
+    padding: 0 max(16px, env(safe-area-inset-left));
+  }
+
+  .game-column { height: calc(100dvh - var(--header-h)); }
+
+  /* 首页 header 内容也用同一套列宽：logo + 标题落第一列（对齐游戏面板左边），
+     导航落第二列并右对齐（右边对齐文字列）。
+     覆盖掉默认的 .wrap 容器；padding 必须和 .home-main 一致，否则起点对不上。 */
+  .page-home .site-header__inner {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, var(--home-game-w)) minmax(0, var(--home-copy-w));
+    justify-content: center;
+    column-gap: var(--home-gap);
+    align-items: center;
+  }
+
+  .page-home .site-header__brand { justify-self: start; }
+  .page-home .site-header__nav { justify-self: end; margin-left: 0; }
 
   .home-copy {
-    height: 100dvh;
-    overflow-y: auto;
-    padding: 34px 36px 64px;
+    padding: 34px 0 64px;
     max-width: none;
   }
 
-  .home-copy-inner { max-width: 62ch; }
+  .home-copy-inner { max-width: none; }
 }
 
 @media (max-width: 899px) {
   .game-column { height: auto; }
-  .game-stage { height: 100dvh; max-height: 100dvh; }
+  .game-stage { height: calc(100dvh - var(--header-h)); }
 }
 
 /* 窄屏：导航收一收，保证「logo + 名字 + 4 个链接」能排成一行 */
 @media (max-width: 560px) {
-  .site-header { gap: 10px; padding-top: 9px; padding-bottom: 9px; }
+  /* 导航收窄后 header 也跟着矮了，同步更新，否则游戏区会白留一截 */
+  :root { --header-h: 48px; }
+  .site-header__inner { gap: 10px; padding-top: 9px; padding-bottom: 9px; }
   .site-header__brand { font-size: 15px; gap: 7px; }
   .site-header__logo { width: 24px; height: 24px; }
   .site-header__nav { gap: 0; }

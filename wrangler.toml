@@ -1,0 +1,17 @@
+# Cloudflare Pages 项目配置。
+#
+# 这是纯静态站点，没有 Functions，所以只有三行关键配置：
+#   name                     → Cloudflare Pages 项目名
+#   pages_build_output_dir   → 上传哪个目录（webpack 产物）
+#   compatibility_date       → 只是让 wrangler 不报警告，静态站用不到
+#
+# 部署（本机构建 + 直投，不走 CI）：
+#
+#   CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... npm run deploy
+#
+# 构建期的 SITE_URL / GA4_ID 默认值已经写在 webpack/site.js
+# （https://kittyjump.online / G-Z6ZM31GBVV），一般不用再传。
+# 想给预览环境关掉统计：GA4_ID= npm run build
+name = "kittyjump"
+pages_build_output_dir = "./build"
+compatibility_date = "2026-10-05"

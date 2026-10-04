@@ -14,6 +14,7 @@
     "start": "webpack serve",
     "prebuild": "rimraf ./build && mkdir ./build",
     "build": "webpack --mode production",
+    "deploy": "npm run build && npx --yes wrangler@4 pages deploy",
     "test": "node --test $(find src -name '*.test.mjs')"
   },
   "dependencies": {

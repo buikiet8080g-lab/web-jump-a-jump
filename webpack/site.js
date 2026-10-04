@@ -12,10 +12,14 @@ const SITE = {
   // 所以**这个值必须和实际上线地址一致**，否则搜索引擎会收到互相矛盾的信号。
   //
   // 用环境变量注入，因为不同托管方式的地址不一样，同一条构建命令都能用：
-  //   Cloudflare Pages: SITE_URL=https://kittyjump.pages.dev npm run build
-  //   GitHub Pages(项目页): SITE_URL=https://<user>.github.io/<repo> npm run build
+  //   正式站（默认）:    https://kittyjump.online
+  //   Pages 预览域名:    SITE_URL=https://kittyjump.pages.dev npm run build
   //   自有域名:         SITE_URL=https://yourdomain.com npm run build
-  url: (process.env.SITE_URL || 'https://kittyjump.pages.dev').replace(/\/+$/, ''),
+  url: (process.env.SITE_URL || 'https://kittyjump.online').replace(/\/+$/, ''),
+
+  // GA4 Measurement ID。所有页面的 gtag 都由 webpack/layout.js 注入。
+  // 用环境变量覆盖是为了本地/预览环境不往正式报表里灌数据。
+  ga4: process.env.GA4_ID || 'G-Z6ZM31GBVV',
 
   tagline: 'A free one-thumb cat jumping game you can play in the browser.',
   // 社交分享图，1200×630

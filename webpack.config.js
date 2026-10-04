@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { buildPage } = require('./webpack/layout');
+const { buildPage, CHROME_CSS, LOGO_SVG } = require('./webpack/layout');
 const { SITE, NAV } = require('./webpack/site');
 
 const buildPath = './build/';
@@ -34,6 +34,12 @@ class SiteFilesPlugin {
 
     compiler.hooks.thisCompilation.tap(name, (compilation) => {
       const { RawSource } = compiler.webpack.sources;
+
+      // 外壳 CSS / logo 是 layout.js 用 fs 读的，不在模块依赖图里。
+      // 不登记的话，改了 webpack/chrome.css 后 dev server 不会重新编译，
+      // 页面看上去「一点变化都没有」。
+      compilation.fileDependencies.add(CHROME_CSS);
+      compilation.fileDependencies.add(LOGO_SVG);
 
       compilation.hooks.processAssets.tap(
         { name, stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONAL },

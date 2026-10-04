@@ -13,23 +13,38 @@ const fs = require('fs');
 const path = require('path');
 const { SITE, NAV, CRUMB, absolute } = require('./site');
 
-const chromeCss = fs.readFileSync(path.join(__dirname, 'chrome.css'), 'utf8');
+const CHROME_CSS = path.join(__dirname, 'chrome.css');
+const LOGO_SVG = path.join(__dirname, '..', 'src', 'res', 'brand', 'logo.svg');
+
+// 这两份文件是用 fs 直接读的，不在 webpack 的模块依赖图里。
+// ⚠️ 不要在模块顶层缓存读取结果：webpack 配置只在 dev server 启动时加载一次，
+//    顶层缓存意味着「改了 chrome.css 却看不到任何变化」，必须重启 dev server。
+// 配套：webpack.config.js 把这两个路径登记进 compilation.fileDependencies，
+//      让 dev server 能监听到改动并重新编译（见 SiteFilesPlugin）。
+
+function readChromeCss() {
+  return fs.readFileSync(CHROME_CSS, 'utf8');
+}
 
 // logo 直接内联进页面。
 // 不引用 /logo.svg 的原因：素材过了 webpack，文件名带 hash（logo.abc123.svg），
 // 而这些内容页是零 JS 的，拿不到那个 URL。内联还省掉一次请求。
-const logoSvg = fs
-  .readFileSync(path.join(__dirname, '..', 'src', 'res', 'brand', 'logo.svg'), 'utf8')
-  .replace(/<\?xml[^>]*\?>/, '')
-  // 注释必须去掉：logo.svg 里有大段中文说明，内联进 favicon 的 data URI 时
-  // 会被 URL 编码成几十倍长度（实测光注释就 4KB），每个页面都要背一遍
-  .replace(/<!--[\s\S]*?-->/g, '')
-  .replace(/\n\s*/g, ' ')
-  .trim();
+function brandAssets() {
+  const logoSvg = fs
+    .readFileSync(LOGO_SVG, 'utf8')
+    .replace(/<\?xml[^>]*\?>/, '')
+    // 注释必须去掉：logo.svg 里有大段中文说明，内联进 favicon 的 data URI 时
+    // 会被 URL 编码成几十倍长度（实测光注释就 4KB），每个页面都要背一遍
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\n\s*/g, ' ')
+    .trim();
 
-// favicon 同样内联成 data URI —— 内容页不需要额外的图标文件
-const faviconDataUri =
-  'data:image/svg+xml,' + encodeURIComponent(logoSvg).replace(/'/g, '%27').replace(/"/g, '%22');
+  // favicon 同样内联成 data URI —— 内容页不需要额外的图标文件
+  const faviconDataUri =
+    'data:image/svg+xml,' + encodeURIComponent(logoSvg).replace(/'/g, '%27').replace(/"/g, '%22');
+
+  return { logoSvg, faviconDataUri };
+}
 
 /** HTML 文本转义，防止内容里的 & < > " 破坏结构 */
 function esc(value) {
@@ -45,12 +60,12 @@ function renderNav(activePath) {
   const links = NAV.map(({ path: p, label }) => {
     const href = p ? `/${p}` : '/';
     const current = p === activePath ? ' aria-current="page"' : '';
-    return `        <a href="${href}"${current}>${esc(label)}</a>`;
+    return `          <a href="${href}"${current}>${esc(label)}</a>`;
   }).join('\n');
 
-  return `      <nav class="site-header__nav" aria-label="Main">
+  return `        <nav class="site-header__nav" aria-label="Main">
 ${links}
-      </nav>`;
+        </nav>`;
 }
 
 /** 面包屑：首页 > 当前页。同时会输出 BreadcrumbList 结构化数据 */
@@ -88,6 +103,28 @@ function renderJsonLd(blocks) {
 }
 
 /**
+ * GA4（gtag.js）。
+ *
+ * 四个页面都注入，包括三个内容页 —— 那几页原本是刻意做成零 JS 的，
+ * gtag 是唯一的例外（要统计落地页来源 / 跳出，没别的办法）。
+ * SITE.ga4 为空时完全不输出，本地调试可以 GA4_ID= 关掉。
+ */
+function renderAnalytics() {
+  const id = SITE.ga4;
+  if (!id) return '';
+
+  return `
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=${esc(id)}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${esc(id)}');
+    </script>`;
+}
+
+/**
  * 生成一个完整页面。
  *
  * @param {object}   page
@@ -101,6 +138,9 @@ function renderJsonLd(blocks) {
  */
 function buildPage({ path: pagePath = '', title, description, body, jsonLd = [], head = '', scripts = '' }) {
   const canonical = absolute(pagePath);
+  // 每次构建都重读，配合 fileDependencies 实现 dev server 热更新
+  const chromeCss = readChromeCss();
+  const { logoSvg, faviconDataUri } = brandAssets();
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -125,19 +165,21 @@ function buildPage({ path: pagePath = '', title, description, body, jsonLd = [],
     <meta name="twitter:title" content="${esc(title)}">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${esc(SITE.url + SITE.ogImage)}">
-${renderJsonLd(jsonLd.concat([breadcrumbJsonLd(pagePath)]))}${head ? '\n' + head : ''}
+${renderJsonLd(jsonLd.concat([breadcrumbJsonLd(pagePath)]))}${head ? '\n' + head : ''}${renderAnalytics()}
 
     <style>
 ${chromeCss}
     </style>
   </head>
-  <body>
+  <body class="${pagePath ? `page-${esc(pagePath)}` : 'page-home'}">
     <header class="site-header">
-      <a class="site-header__brand" href="/">
-        <span class="site-header__logo" aria-hidden="true">${logoSvg}</span>
-        <span>${esc(SITE.name)}</span>
-      </a>
+      <div class="site-header__inner">
+        <a class="site-header__brand" href="/">
+          <span class="site-header__logo" aria-hidden="true">${logoSvg}</span>
+          <span>${esc(SITE.name)}</span>
+        </a>
 ${renderNav(pagePath)}
+      </div>
     </header>
 ${renderCrumbs(pagePath)}
 ${body}
@@ -158,4 +200,4 @@ ${scripts}
 `;
 }
 
-module.exports = { buildPage, esc };
+module.exports = { buildPage, esc, CHROME_CSS, LOGO_SVG };
