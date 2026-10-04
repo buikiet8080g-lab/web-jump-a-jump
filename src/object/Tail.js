@@ -13,6 +13,8 @@ import {
   WIDTH
 } from "../config/constant";
 
+import {getTheme} from "../config/theme";
+
 // 一个完整的拖尾是由若干个碎片组成的
 class TailFragment{
   constructor(geometry, material) {
@@ -65,12 +67,13 @@ export default class Tail {
   init(){
     this.geometry = new PlaneGeometry(TAIL_WIDTH, TAIL_HEIGHT);
 
-    // 白色带透明度
+    // 颜色/透明度都来自主题（原来写死的是 0xffffff / 0.6）
+    const tail = getTheme().tail;
     this.material = new MeshBasicMaterial({
-      color: 0xffffff,
+      color: tail.color,
       side: DoubleSide,
       transparent: true,
-      opacity: 0.6
+      opacity: tail.opacity
     });
 
     // 我们设置的屏宽是 100，精度是 1

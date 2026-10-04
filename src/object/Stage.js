@@ -10,21 +10,22 @@ import {
   DirectionalLight,
   OrthographicCamera,
   BoxHelper,
-  Vector2
+  Vector2,
+  CanvasTexture
 } from 'three';
 
 import {
-  BACKGROUND_COLOR,
   DEV,
   WIDTH,
   HEIGHT,
   CLIENT_HEIGHT,
   CLIENT_WIDTH,
   FAR,
-  LIGHT_COLOR,
   ORBIT_CONTROL,
   ENABLE_IMAGE_POST_PROCESS
 } from '../config/constant';
+
+import {getTheme} from '../config/theme';
 
 // DEBUG 时候用的视角控制器
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -34,6 +35,12 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
 
 import Stats from 'stats.js';
+
+// 0xRRGGBB -> '#rrggbb'（故意不用 String.padStart，避免依赖 polyfill）
+function toCssColor (hex) {
+  const value = hex.toString(16);
+  return '#' + '000000'.substring(value.length) + value;
+}
 
 export default class Stage {
 
@@ -78,12 +85,33 @@ export default class Stage {
   createScene () {
     this.scene = new Scene();
     this.scene.updateMatrixWorld(true);
-    this.scene.background = new Color(BACKGROUND_COLOR);
+    this.scene.background = this.createGradientBackground(getTheme().background);
 
     if (DEV) {
       // 坐标辅助线
       this.scene.add(new AxesHelper(FAR))
     }
+  }
+
+  // 竖直渐变背景（原先是单一纯色）
+  // 用 2x256 的 canvas 画一条竖直渐变，再交给 scene.background 铺满。
+  // 因为只有竖直方向有变化，横向拉伸不会失真，所以不用关心屏幕宽高比。
+  createGradientBackground ({ top, bottom }) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 256;
+
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, toCssColor(top));
+    gradient.addColorStop(1, toCssColor(bottom));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const texture = new CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    return texture;
   }
 
   // 地面
@@ -94,7 +122,7 @@ export default class Stage {
     // ShadowMaterial 阴影材质, 此材质可以接收阴影
     // transparent： 透明，在非透明对象之后渲染
     // opacity: 透明度
-    const material = new ShadowMaterial({ transparent: true, opacity: 0.5});
+    const material = new ShadowMaterial({ transparent: true, opacity: getTheme().groundShadowOpacity});
 
     this.plane = new Mesh(geometry, material);
     // 接收阴影
@@ -113,11 +141,13 @@ export default class Stage {
 
   // 光源
   createLight() {
+    const light = getTheme().light;
+
     // 环境光会均匀的照亮场景中的所有物体，它不能用来投射阴影，因为它没有方向
-    const ambientLight = new AmbientLight(LIGHT_COLOR, 0.5);
+    const ambientLight = new AmbientLight(light.color, light.ambient);
 
     // 平行光，平行光可以投射阴影
-    this.shadowLight = new DirectionalLight(LIGHT_COLOR, 0.5);
+    this.shadowLight = new DirectionalLight(light.color, light.directional);
     // 设定光照源方向，目标默认是原点
     // 这个大小无意义，只代表方向
     this.shadowLight.position.set(FAR/6, FAR/2, FAR/6);

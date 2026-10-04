@@ -16,13 +16,9 @@ const ENABLE_AUTO_JUMP = false;
 // 手动销毁 box
 const ENABLE_DISPOSE_BOX = true;
 
-// 背景色
-const BACKGROUND_COLOR = 0xD6DBDF;
-
-// 白光
-const LIGHT_COLOR = 0xFFFFFF;
-// 盒子
-const BOX_COLORS = [0Xfa541c, 0xfaad14, 0x13c2c2, 0x1890ff, 0x722ed1, 0xFFFFFF, 0xa0d911];
+// 注意：
+// 外观类常量（背景色、光源颜色、箱子颜色池、小人颜色、贴图）已经全部
+// 搬到 src/config/theme/ 下按主题管理。本文件只保留「物理 / 玩法 / 技术」参数。
 
 // 基础宽度
 // 为了方便计算，任何大小的屏幕下，宽度都是基础宽
@@ -46,10 +42,9 @@ const BLOCK_MIN_SIZE = WIDTH > HEIGHT ? HEIGHT/8 : WIDTH/8;
 const BLOCK_MAX_DISTANCE = WIDTH > HEIGHT ? HEIGHT/2 : WIDTH/2;
 const BLOCK_MIN_DISTANCE = WIDTH > HEIGHT ? HEIGHT/8 : WIDTH/8;
 
-// 小人的大小，颜色
+// 小人的大小
 const LITTLE_MAN_WIDTH = BLOCK_MIN_SIZE/2.3;
 const LITTLE_MAN_HEIGHT = LITTLE_MAN_WIDTH * 3.5;
-const LITTLE_MAN_COLOR = '#f5222d';
 
 // 最大蓄力时间
 const STORAGE_TIME = 1500;
@@ -80,22 +75,18 @@ export {
   ORBIT_CONTROL,
   ENABLE_IMAGE_POST_PROCESS,
   ENABLE_DISPOSE_BOX,
-  BACKGROUND_COLOR,
-  BOX_COLORS,
   BASE_WIDTH,
   CLIENT_HEIGHT,
   CLIENT_WIDTH,
   WIDTH,
   HEIGHT,
   FAR,
-  LIGHT_COLOR,
   BLOCK_MAX_SIZE,
   BLOCK_MIN_SIZE,
   BLOCK_MAX_DISTANCE,
   BLOCK_MIN_DISTANCE,
   LITTLE_MAN_WIDTH,
   LITTLE_MAN_HEIGHT,
-  LITTLE_MAN_COLOR,
   JUMP_TIME,
   HIGH_JUMP,
   STORAGE_TIME,

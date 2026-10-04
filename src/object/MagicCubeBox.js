@@ -1,9 +1,8 @@
 import Box from './Box';
-import {BoxGeometry, Geometry, Mesh, MeshBasicMaterial, TextureLoader} from "three";
+import {BoxGeometry, Geometry, Mesh, MeshBasicMaterial, MeshLambertMaterial} from "three";
 import {recreateCubeUV, LEFT, TOP, BEHIND, RIGHT} from '../util/MapUtil';
-import box_top from '../res/box_top.png';
-import box_middle from '../res/box_middle.png';
-import box_bottom from '../res/box_bottom.png';
+import {getTheme} from '../config/theme';
+import {getTexture} from '../util/TextureCache';
 import TWEEN from '@tweenjs/tween.js';
 import {animateFrame} from "../util/TweenUtil";
 
@@ -14,15 +13,18 @@ export default class MagicCubeBox extends Box {
 
   initBox() {
     const height = this.height / 3;
-    const topMaterial = new MeshBasicMaterial({
-      map: new TextureLoader().load(box_top),
-    });
-    const middleMaterial = new MeshBasicMaterial({
-      map: new TextureLoader().load(box_middle),
-    });
-    const bottomMaterial = new MeshBasicMaterial({
-      map: new TextureLoader().load(box_bottom),
-    });
+
+    // 三段贴图来自主题；主题没给就三段都退回纯色
+    const magic = getTheme().magicTextures;
+    const topMaterial = magic
+      ? new MeshBasicMaterial({map: getTexture(magic.top)})
+      : new MeshLambertMaterial({color: this.color});
+    const middleMaterial = magic
+      ? new MeshBasicMaterial({map: getTexture(magic.middle)})
+      : new MeshLambertMaterial({color: this.color});
+    const bottomMaterial = magic
+      ? new MeshBasicMaterial({map: getTexture(magic.bottom)})
+      : new MeshLambertMaterial({color: this.color});
 
     const topGeometry = new BoxGeometry(this.height * 1.5, height, this.height * 1.5);
     const middleGeometry = new BoxGeometry(this.height * 1.5, height, this.height * 1.5);

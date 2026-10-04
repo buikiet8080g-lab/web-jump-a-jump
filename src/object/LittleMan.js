@@ -10,12 +10,12 @@ import TWEEN from '@tweenjs/tween.js';
 import {
   LITTLE_MAN_WIDTH,
   LITTLE_MAN_HEIGHT,
-  LITTLE_MAN_COLOR,
   JUMP_TIME,
   HIGH_JUMP,
   STORAGE_TIME,
   ENABLE_AUTO_JUMP
 } from "../config/constant";
+import {getTheme} from "../config/theme";
 import {animateFrame} from '../util/TweenUtil';
 import Box from './Box';
 import Particle from './Particle';
@@ -26,8 +26,11 @@ class LittleMan {
   constructor (stage, boxGroup) {
     this.stage = stage;
     this.boxGroup = boxGroup;
-    // 定义小人的材质，方便复用
-    this.materail = new MeshLambertMaterial({color: LITTLE_MAN_COLOR});
+    // 小人的材质：头和身子拆开，做成「双色糖果小人」
+    // （原来头和身子共用一个单色材质，就是一个纯色棋子）
+    const littleMan = getTheme().littleMan || {};
+    this.headMaterial = new MeshLambertMaterial({color: littleMan.headColor || 0xfff4ec});
+    this.bodyMaterial = new MeshLambertMaterial({color: littleMan.bodyColor || 0xf0455f});
     // 头部
     this.head = null;
     // 躯干
@@ -81,7 +84,7 @@ class LittleMan {
     // 球缓冲几何体
     const headGeometry = new SphereGeometry(LITTLE_MAN_WIDTH/2, 40, 40);
 
-    this.head = new Mesh(headGeometry, this.materail);
+    this.head = new Mesh(headGeometry, this.headMaterial);
     // 小人也能投射阴影
     this.head.castShadow = true;
 
@@ -125,7 +128,7 @@ class LittleMan {
     trunkGeometry.merge(trunkCenterGeometry);
     trunkGeometry.merge(trunkBottomGeometry);
 
-    this.trunk = new Mesh(trunkGeometry, this.materail);
+    this.trunk = new Mesh(trunkGeometry, this.bodyMaterial);
     this.trunk.castShadow = true;
     // 躯干能接收头部的阴影
     this.trunk.receiveShadow = true;

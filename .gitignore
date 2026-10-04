@@ -4,3 +4,12 @@ node_modules
 .DS_Store
 *.code-workspace
 .idea
+
+# 贴图生成等临时产物
+tmp
+
+# 贴图 AI 母版（未裁切的原始输出，仅本地重新加工用；正式贴图是 src/res/textures/*.webp）
+src/res/textures/_raw/
+
+# 修复 npm 老 lockfile 时留的备份
+package-lock.json.bak-*

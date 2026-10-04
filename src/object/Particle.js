@@ -2,7 +2,6 @@ import {
   MeshBasicMaterial,
   Mesh,
   PlaneGeometry,
-  TextureLoader
 } from 'three'
 
 import {
@@ -14,7 +13,8 @@ import {
 
 import TWEEN from '@tweenjs/tween.js';
 
-import Dot from '../res/dot.png';
+import {getTheme} from '../config/theme';
+import {getTexture} from '../util/TextureCache';
 import {animateFrame} from "../util/TweenUtil";
 
 export default class Particle {
@@ -28,32 +28,26 @@ export default class Particle {
 
   // 生成粒子
   createParticles(){
-    // 白色材料
-    const whiteParticleMaterial = new MeshBasicMaterial({
-      color: 0xffffff,
-      map: new TextureLoader().load(Dot),
-      alphaTest: 0.3
-    });
+    // 颜色和贴图都来自主题（原来写死的是「一半白 + 一半绿」）
+    const particle = getTheme().particle;
+    const colors = (particle.colors && particle.colors.length)
+      ? particle.colors
+      : [0xffffff];
+    const texture = getTexture(particle.texture);
 
-    // 绿色材料
-    const greenParticleMaterial = new MeshBasicMaterial({
-      color: 0x52c41a,
-      map: new TextureLoader().load(Dot),
+    // 每个颜色一个材质，粒子按颜色轮流分配
+    const materials = colors.map((color) => new MeshBasicMaterial({
+      color,
+      map: texture,
       alphaTest: 0.3
-    });
+    }));
+
     // 粒子的大小为 2 * 2
     const particleGeometry = new PlaneGeometry(2, 2);
 
-    // 生成白色粒子
-    for (let i = 0; i < PARTICLE_NUM/2; ++i) {
-      const particle = new Mesh(particleGeometry, whiteParticleMaterial);
-      this.particles.push(particle);
-    }
-
-    // 生成绿色粒子
-    for (let i = 0; i < PARTICLE_NUM/2; ++i) {
-      const particle = new Mesh(particleGeometry, greenParticleMaterial);
-      this.particles.push(particle);
+    for (let i = 0; i < PARTICLE_NUM; ++i) {
+      const mesh = new Mesh(particleGeometry, materials[i % materials.length]);
+      this.particles.push(mesh);
     }
 
     // 调整粒子的朝向,和相机的一致

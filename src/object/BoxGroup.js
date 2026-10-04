@@ -8,24 +8,62 @@ import ExpressBox from './ExpressBox';
 import MagicCubeBox from './MagicCubeBox';
 import {animateFrame} from '../util/TweenUtil';
 import {FAR, ENABLE_DISPOSE_BOX} from "../config/constant";
+import {getTheme} from '../config/theme';
 
+// key 用于在主题里配权重（theme.boxWeights）
 const BoxList = [{
   index: 0,
+  key: 'cube',
   box: CubeBox,
   isStatic: false
 }, {
   index: 1,
+  key: 'cylinder',
   box: CylinderBox,
   isStatic: false
 },{
   index: 2,
+  key: 'express',
   box: ExpressBox,
   isStatic: true
 },{
   index: 3,
+  key: 'magic',
   box: MagicCubeBox,
   isStatic: true
 }];
+
+// 当前主题里各箱型的权重
+function themeWeights() {
+  return getTheme().boxWeights || {};
+}
+
+function weightOf(boxIndex) {
+  const entry = BoxList[boxIndex];
+
+  return entry ? (themeWeights()[entry.key] || 0) : 0;
+}
+
+// 按主题权重随机挑一个箱型（权重 0 = 该主题里不出现这种箱子）
+function pickBoxIndex() {
+  const weights = themeWeights();
+  const pool = BoxList.filter((entry) => (weights[entry.key] || 0) > 0);
+
+  // 主题没配权重（或全为 0）时退回均等随机，保证永远有箱子可生成
+  if (pool.length === 0) {
+    return Math.floor(Math.random() * BoxList.length);
+  }
+
+  const total = pool.reduce((sum, entry) => sum + weights[entry.key], 0);
+  let threshold = Math.random() * total;
+
+  for (const entry of pool) {
+    threshold -= weights[entry.key];
+    if (threshold < 0) return entry.index;
+  }
+
+  return pool[pool.length - 1].index;
+}
 
 export default class BoxGroup {
 
@@ -39,8 +77,10 @@ export default class BoxGroup {
     // 存放盒子的缓存
     this.boxInstance = {};
 
-    this.boxInstance[2] = new ExpressBox(null).mesh;
-    this.boxInstance[3] = new MagicCubeBox(null).mesh;
+    // 只为「本主题会用到」的特殊箱子预建缓存：
+    // 主题把权重设成 0 时就不建，省一次无谓的加载
+    if (weightOf(2) > 0) this.boxInstance[2] = new ExpressBox(null).mesh;
+    if (weightOf(3) > 0) this.boxInstance[3] = new MagicCubeBox(null).mesh;
   }
 
   getBoxInstance(index) {
@@ -66,11 +106,13 @@ export default class BoxGroup {
     let box;
 
     if (!this.last || !this.last.prev) {
-      box = new CubeBox(this.last);
-    } else {
-      const index = Math.ceil(Math.random() * BoxList.length - 1);
+      // 开局两个箱子的尺寸是固定的（见 Box.initSize），所以开局优先用立方体当起跳台；
+      // 万一主题里没有立方体，就走权重随机
+      const startIndex = weightOf(0) > 0 ? 0 : pickBoxIndex();
 
-      box = this.getBoxInstance(index);
+      box = this.getBoxInstance(startIndex);
+    } else {
+      box = this.getBoxInstance(pickBoxIndex());
     }
 
     this.group.add(box.mesh);

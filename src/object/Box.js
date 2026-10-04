@@ -1,10 +1,11 @@
 import {
   BLOCK_MAX_SIZE,
   BLOCK_MIN_SIZE,
-  BOX_COLORS,
   BLOCK_MAX_DISTANCE,
   BLOCK_MIN_DISTANCE,
 } from "../config/constant";
+import {getTheme} from "../config/theme";
+import {getTexture} from "../util/TextureCache";
 import TWEEN from '@tweenjs/tween.js';
 import {animateFrame} from "../util/TweenUtil";
 
@@ -25,8 +26,10 @@ class Box {
     this.size = null;
     // 高度固定,缩放的时候这个值会变
     this.height = Box.defaultHeight;
-    // 颜色
+    // 颜色（纯色路线用）
     this.color = null;
+    // 贴图（贴图路线用）；null 表示这个箱子走纯色
+    this.texture = null;
 
     // 位置
     // 这个设计不是很好，信息重复存放，后期维护很麻烦
@@ -51,8 +54,8 @@ class Box {
   init() {
     // 随机盒子的大小
     this.initSize();
-    // 随机盒子颜色
-    this.initColor();
+    // 随机盒子的外观（贴图 or 纯色）
+    this.initSkin();
     // 随机下一个盒子的方向
     this.initDirection();
     // 随机下一个盒子的距离
@@ -82,11 +85,33 @@ class Box {
     this.size = Math.random() * (BLOCK_MAX_SIZE - BLOCK_MIN_SIZE) + BLOCK_MIN_SIZE;
   }
 
-  // 从备选的颜色中随机一个
-  initColor() {
-    const colorIndex = Math.floor(Math.random() * BOX_COLORS.length);
+  // 随机箱子的外观：优先贴图，没贴图（或概率没命中）就退回纯色
+  initSkin() {
+    const theme = getTheme();
+    const textures = theme.textures || [];
+    const colors = theme.colors || [0xffffff];
+    const prev = this.prev;
 
-    this.color = BOX_COLORS[colorIndex];
+    // 抽一次可能和上一个箱子撞成一模一样（纯随机会有 ~1/3 概率），
+    // 相邻两个箱子长得完全一样看着很假，所以撞了重摇（最多 4 次，避免死循环）。
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const useTexture = textures.length > 0 && Math.random() < (theme.textureRatio || 0);
+
+      if (useTexture) {
+        const url = textures[Math.floor(Math.random() * textures.length)];
+
+        this.texture = getTexture(url);
+        // 贴图时底色设白，否则 color 会和 map 相乘、把图染脏
+        this.color = 0xffffff;
+      } else {
+        this.texture = null;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      const sameAsPrev = prev && prev.texture === this.texture && prev.color === this.color;
+
+      if (!sameAsPrev) break;
+    }
   }
 
   // 方向
