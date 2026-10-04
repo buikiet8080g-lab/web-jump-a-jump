@@ -14,7 +14,7 @@
     "start": "webpack serve",
     "prebuild": "rimraf ./build && mkdir ./build",
     "build": "webpack --mode production",
-    "deploy": "npm run build && npx --yes wrangler@4 pages deploy",
+    "deploy": "npm run build && npx --yes wrangler@4 pages deploy ./build --project-name kittyjump --branch main",
     "test": "node --test $(find src -name '*.test.mjs')"
   },
   "dependencies": {
