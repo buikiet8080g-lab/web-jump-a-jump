@@ -28,6 +28,19 @@ module.exports = {
     ]
   },
   plugins: [
-    new HtmlWebpackPlugin({'title': '跳一跳 Demo'})
+    new HtmlWebpackPlugin({
+      title: 'Jump Jump',
+      // 用内联模板：默认模板不带 <html lang>，这里顺手把页面语言标成 en
+      templateContent: ({ htmlWebpackPlugin }) => `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${htmlWebpackPlugin.options.title}</title>
+  </head>
+  <body>
+  </body>
+</html>`,
+    })
   ]
 };

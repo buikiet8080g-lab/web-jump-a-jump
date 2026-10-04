@@ -85,6 +85,7 @@ export default class Stage {
   createScene () {
     this.scene = new Scene();
     this.scene.updateMatrixWorld(true);
+    // 游戏区自己的背景：主题里配的竖直渐变
     this.scene.background = this.createGradientBackground(getTheme().background);
 
     if (DEV) {
@@ -144,7 +145,7 @@ export default class Stage {
     const light = getTheme().light;
 
     // 环境光会均匀的照亮场景中的所有物体，它不能用来投射阴影，因为它没有方向
-    const ambientLight = new AmbientLight(light.color, light.ambient);
+    this.ambientLight = new AmbientLight(light.color, light.ambient);
 
     // 平行光，平行光可以投射阴影
     this.shadowLight = new DirectionalLight(light.color, light.directional);
@@ -158,8 +159,21 @@ export default class Stage {
     this.shadowLight.shadow.camera = new OrthographicCamera(-WIDTH*1.5, WIDTH*1.5, HEIGHT, -HEIGHT, 0, 2 * FAR);
     this.shadowLight.shadow.mapSize = new Vector2( 1024, 1024 );
 
-    this.scene.add(ambientLight);
+    this.scene.add(this.ambientLight);
     this.scene.add(this.shadowLight);
+  }
+
+  // 重开一局：把「每局都会重建」的对象（盒子组 / 小人 / 拖尾碎片）从场景里摘掉，
+  // 只留地面和灯光。
+  // 这样渲染器、相机、灯光、贴图缓存都能复用 —— 不用重建整个 Stage。
+  removeGameObjects () {
+    const keep = new Set([this.plane, this.ambientLight, this.shadowLight]);
+
+    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      const child = this.scene.children[i];
+
+      if (!keep.has(child)) this.scene.remove(child);
+    }
   }
 
   // 相机

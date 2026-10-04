@@ -61,6 +61,11 @@ class LittleMan {
     // 粒子
     this.particle = new Particle();
 
+    // 本局是否已结束（防止重复触发结束回调、防止死后还能操作）
+    this.dead = false;
+    // 游戏结束回调，由 JumpGame 注入
+    this.onGameOver = null;
+
     this.init();
   }
 
@@ -168,9 +173,17 @@ class LittleMan {
     const mousedownName = isMobile ? 'touchstart' : 'mousedown';
     const mouseupName = isMobile ? 'touchend' : 'mouseup';
 
+    // 存下事件名和处理函数：重开一局时要能解绑，
+    // 否则每重开一次就会在小人身上多挂一份监听
+    this.eventTarget = container;
+    this.eventNames = [mousedownName, mouseupName];
+
     // 监听按下事件
-    container.addEventListener(mousedownName, (event) => {
+    this.onMouseDown = (event) => {
       event.preventDefault();
+      // 本局已结束，不再响应操作
+      if (this.dead) return;
+
       // 开始蓄力
       if(this.state === LittleMan.STATE.init) {
         this.state = LittleMan.STATE.storage;
@@ -179,11 +192,12 @@ class LittleMan {
         // 形变
         this.storage()
       }
-    }, false);
+    };
 
     // 监听松开事件
-    container.addEventListener(mouseupName, (event) => {
+    this.onMouseUp = (event) => {
       event.preventDefault();
+      if (this.dead) return;
 
       if(this.state === LittleMan.STATE.storage) {
         this.state = LittleMan.STATE.jumping;
@@ -193,7 +207,34 @@ class LittleMan {
         // 跳跃
         this.jump();
       }
-    }, false)
+    };
+
+    container.addEventListener(mousedownName, this.onMouseDown, false);
+    container.addEventListener(mouseupName, this.onMouseUp, false);
+  }
+
+  // 解绑事件（重开一局时先把上一局的小人销毁掉）
+  destroy () {
+    // 先断掉结束回调：die() 里那个延时可能还没触发，
+    // 否则上一局的回调会把新一局刚开出来就弹出「游戏结束」
+    this.onGameOver = null;
+
+    if (!this.eventTarget) return;
+
+    this.eventTarget.removeEventListener(this.eventNames[0], this.onMouseDown, false);
+    this.eventTarget.removeEventListener(this.eventNames[1], this.onMouseUp, false);
+    this.eventTarget = null;
+  }
+
+  // 本局结束（出界 / 坠落）
+  die () {
+    if (this.dead) return;
+    this.dead = true;
+
+    // 等坠落/倾倒动画播完再弹提示，让玩家看清自己是怎么死的
+    setTimeout(() => {
+      if (this.onGameOver) this.onGameOver();
+    }, 900);
   }
 
   // 蓄力
@@ -299,6 +340,7 @@ class LittleMan {
     // 跳到了空地（游戏结束）
     if (state === LittleMan.STATE.outRange) {
       this.landToGround();
+      this.die();
     }
 
     // 前向掉落,后向掉落（游戏结束）
@@ -306,6 +348,7 @@ class LittleMan {
         state === LittleMan.STATE.next_edge_front ||
         state === LittleMan.STATE.next_edge_back) {
       this.leaning(state);
+      this.die();
     }
   }
 

@@ -1,6 +1,218 @@
+:root {
+    /* 网页底色：和游戏区的糖果渐变刻意区分开，游戏区（画布）才有清晰的边界。
+       ⚠️ 别把它也做成主题那条渐变 —— 那样两侧和画布同色，游戏区就“消失”了。 */
+    --page-bg: #ffffff;
+}
+
 body{
     margin: 0;
     padding: 0;
     display: flex;
     justify-content: center;
+    min-height: 100vh;
+    background: var(--page-bg);
+    /* 界面文案是英文，用西文字体优先的字体栈；
+       （如果以后要出中文版，在末尾补 "PingFang SC"、"Microsoft YaHei" 即可） */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 游戏区（WebGL 画布）：铺满高度、自带主题渐变背景，不加圆角
+   （背景色来自主题的 background，在 Stage.createScene 里生成） */
+canvas {
+    display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   顶部标题：logo + 游戏名
+   直接叠在游戏区里（不单独占一条标题栏），所以没有自己的背景色。
+   必须 pointer-events: none —— 否则会挡住画布上的蓄力点击。
+   --------------------------------------------------------------------------- */
+
+.game-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: transparent;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.game-header__logo {
+    display: block;
+    width: 30px;
+    height: 30px;
+    /* 用 drop-shadow 而不是 box-shadow：logo 是圆角图形，
+       box-shadow 会按元素矩形投影，四角会多出一块方影 */
+    filter: drop-shadow(0 2px 4px rgba(238, 85, 104, .30));
+}
+
+.game-header__name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #5b4a63;
+}
+
+/* ---------------------------------------------------------------------------
+   弹层（玩法提示 / 游戏结束）—— 两者共用同一套外壳和卡片样式
+   --------------------------------------------------------------------------- */
+
+.game-over,
+.how-to {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: rgba(120, 102, 138, 0.28);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    /* 隐藏时必须让点击穿透，否则会挡住画布上的蓄力操作 */
+    pointer-events: none;
+    transition: opacity .22s ease, visibility .22s ease;
+    z-index: 10;
+}
+
+.game-over.is-visible,
+.how-to.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.game-over__card,
+.how-to__card {
+    width: 100%;
+    max-width: 280px;
+    padding: 24px 20px 20px;
+    border-radius: 22px;
+    background: #fffdfb;
+    box-shadow: 0 12px 32px rgba(126, 92, 128, 0.22);
+    text-align: center;
+    transform: translateY(8px) scale(.96);
+    transition: transform .22s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* 玩法提示内容多一些，卡片放宽一点 */
+.how-to__card {
+    max-width: 310px;
+    padding-top: 20px;
+}
+
+.game-over.is-visible .game-over__card,
+.how-to.is-visible .how-to__card {
+    transform: translateY(0) scale(1);
+}
+
+.game-over__title,
+.how-to__title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #e8919c;
+}
+
+.game-over__button,
+.how-to__button {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px 0;
+    border: 0;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f7a399, #f0455f);
+    box-shadow: 0 6px 14px rgba(240, 69, 95, .32);
+    transition: transform .12s ease, box-shadow .12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-over__button:hover,
+.how-to__button:hover {
+    box-shadow: 0 8px 18px rgba(240, 69, 95, .40);
+}
+
+.game-over__button:active,
+.how-to__button:active {
+    transform: translateY(1px) scale(.99);
+    box-shadow: 0 4px 10px rgba(240, 69, 95, .30);
+}
+
+/* 游戏结束独有的副标题 */
+.game-over__desc {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #9b8fa3;
+}
+
+/* --- 玩法提示独有 --- */
+
+/* 示意图（手指 + 蓄力环），刻意做小 */
+.how-to__art {
+    margin: 14px 0 4px;
+    line-height: 0;
+}
+
+/* 蓄力环的填充动画：一圈由空填满，然后短暂停留再重来，
+   让「一直按着 = 一直在蓄力」这件事可见 */
+.how-to__ring {
+    stroke-dasharray: 106.8;
+    stroke-dashoffset: 106.8;
+    animation: how-to-charge 1.9s ease-in-out infinite;
+}
+
+@keyframes how-to-charge {
+    0%   { stroke-dashoffset: 106.8; }
+    65%  { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: 0; }
+}
+
+.how-to__steps {
+    margin: 12px 0 0;
+    padding: 0 0 0 20px;
+    text-align: left;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #5b4a63;
+}
+
+.how-to__steps li + li {
+    margin-top: 6px;
+}
+
+.how-to__tip {
+    margin: 12px 0 0;
+    padding: 9px 11px;
+    border-radius: 10px;
+    background: #fdf3f6;
+    text-align: left;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #9b8fa3;
+}
+
+/* 尊重系统的「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+    .how-to__ring {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
 }

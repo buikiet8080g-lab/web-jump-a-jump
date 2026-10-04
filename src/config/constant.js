@@ -25,8 +25,15 @@ const ENABLE_DISPOSE_BOX = true;
 const BASE_WIDTH = 100;
 
 // canvas 大小
-const CLIENT_HEIGHT = window.innerHeight;
-const CLIENT_WIDTH = CLIENT_HEIGHT * 3 / 5;
+//
+// 竖版比例，最多 3:5：
+//   桌面（屏幕比 3:5 宽） → 保持 3:5，居中，两边露出页面底色
+//   手机（屏幕比 3:5 瘦） → 直接铺满宽度，整屏都是游戏区
+// 高度始终铺满视口（游戏区的渐变因此能上下贯通，不会被顶部标题截断）
+const VIEWPORT_WIDTH = window.innerWidth;
+const VIEWPORT_HEIGHT = window.innerHeight;
+const CLIENT_HEIGHT = VIEWPORT_HEIGHT;
+const CLIENT_WIDTH = VIEWPORT_HEIGHT * Math.min(3 / 5, VIEWPORT_WIDTH / VIEWPORT_HEIGHT);
 
 // 视图的宽高
 const WIDTH = BASE_WIDTH;

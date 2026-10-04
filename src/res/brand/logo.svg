@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- 圆角方形底：蜜桃粉 -> 树莓红，和「Play Again」按钮同一套渐变 -->
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f9b0a4"/>
+      <stop offset="1" stop-color="#ee5568"/>
+    </linearGradient>
+    <!-- 左上角一点柔光，避免糖果底太平 -->
+    <radialGradient id="gloss" cx="0.28" cy="0.18" r="0.78">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#badge)"/>
+  <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#gloss)"/>
+
+  <!-- 小人（跳跃中）：奶白色剪影。
+       比例照着游戏里的 LITTLE_MAN_WIDTH : LITTLE_MAN_HEIGHT ≈ 1 : 3.5 ——
+       球头 + 上窄下宽的锥形身；身体顶端嵌在头部圆内，所以连成一体不会脱节。 -->
+  <circle cx="32" cy="13.4" r="5.1" fill="#fffaf5"/>
+  <path d="M28.6 15 h6.8 q1.4 0 1.7 1.4 l2.0 13.4 q0.7 4.7 -4.2 4.7 h-5.8 q-4.9 0 -4.2 -4.7 l2.0 -13.4 q0.3 -1.4 1.7 -1.4 z"
+        fill="#fffaf5"/>
+
+  <!-- 方块 -->
+  <rect x="17.5" y="42" width="29" height="13.5" rx="4.5" fill="#ffe7d6"/>
+</svg>

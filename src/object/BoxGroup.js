@@ -220,4 +220,48 @@ export default class BoxGroup {
     this.littleMan = littleMan;
   }
 
+  // 重开一局：把本局的盒子全部摘掉并释放显存。
+  //
+  // 静态箱型（ExpressBox / MagicCubeBox）的网格是缓存的克隆体，几何体/材质
+  // 是和场景里的网格**共享**的，所以用两个 Set 去重，避免重复 dispose。
+  // 释放掉也没关系 —— 重开一局会 new 一个全新的 BoxGroup，缓存会重建。
+  destroy() {
+    const disposedGeo = new Set();
+    const disposedMat = new Set();
+
+    const disposeMesh = (mesh) => {
+      if (!mesh) return;
+
+      if (mesh.geometry && !disposedGeo.has(mesh.geometry)) {
+        disposedGeo.add(mesh.geometry);
+        mesh.geometry.dispose();
+      }
+
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((mat) => {
+        if (mat && !disposedMat.has(mat)) {
+          disposedMat.add(mat);
+          // 注意：material.dispose() 不会连带释放贴图，共享的 TextureCache 是安全的
+          mat.dispose();
+        }
+      });
+
+      // 魔方箱的中间环是挂在父网格下的子 Mesh
+      (mesh.children || []).forEach(disposeMesh);
+    };
+
+    this.group.children.slice().forEach((mesh) => {
+      disposeMesh(mesh);
+      this.group.remove(mesh);
+    });
+
+    Object.keys(this.boxInstance).forEach((key) => {
+      disposeMesh(this.boxInstance[key]);
+      delete this.boxInstance[key];
+    });
+
+    this.last = null;
+    this.littleMan = null;
+  }
+
 }
