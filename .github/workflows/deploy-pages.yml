@@ -1,11 +1,19 @@
 # 构建静态站点并发布到 GitHub Pages
 #
-# 为什么用 Actions 而不是把 build/ 提交进仓库：
+# 为什么用 Actions 而不是把 build/ 提交进 master：
 #   产物里有 contenthash 文件名，每次构建都会新增一批文件、旧的一直留着，
-#   仓库会越滚越大，而且 review diff 全是哈希文件名。构建产物不应该进版本管理。
+#   仓库会越滚越大，而且 review diff 全是哈希文件名。
 #
-# ⚠️ 首次使用需要手动开一次：
-#   仓库 Settings → Pages → Build and deployment → Source 选 "GitHub Actions"
+# 为什么发到 gh-pages 分支而不是用 actions/deploy-pages：
+#   本仓库试过官方那套（upload-pages-artifact + deploy-pages），
+#   工作流报 "Reported success!"，但 Pages 侧 status 一直是 null、
+#   访问始终 404，而且 pages 的 source 字段每次都会被重置回 master:/。
+#   换成最原始的「构建产物推到 gh-pages 分支 + Pages 从分支发布」就正常了。
+#   gh-pages 是个孤儿分支，跟 master 完全隔离。
+#
+# ⚠️ 首次使用需要手动开一次（只需一次）：
+#   仓库 Settings → Pages → Build and deployment → Source 选 "Deploy from a branch"，
+#   分支选 gh-pages、目录选 /(root)。
 #
 # 如果之后改用 Cloudflare Pages，这个文件可以删掉 —— 那边在控制台里
 # 填「构建命令 npm run build、输出目录 build」即可，不需要 Actions。
@@ -18,17 +26,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# 同一时间只跑一个部署；新的推送不等旧的跑完，直接取消
+# 同一时间只跑一个部署；新的推送直接取消旧的
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,23 +53,23 @@ jobs:
 
       - name: Build
         # ⚠️ 必须和实际访问地址一致 —— canonical / sitemap / og:url 都从它派生。
-        #    GitHub Pages 项目页的地址形如 https://<user>.github.io/<repo>。
+        #    换了自定义域名，改仓库变量 SITE_URL 即可，不用动代码。
         env:
           SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
         run: npm run build
 
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: build
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish to gh-pages
+        run: |
+          set -e
+          cd build
+          # 从零建一个孤儿分支，只装构建产物，和 master 无任何共同历史
+          git init -q
+          git checkout -q -b gh-pages
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA}"
+          git push -q --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
