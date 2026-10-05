@@ -14,8 +14,9 @@
     "start": "webpack serve",
     "prebuild": "rimraf ./build && mkdir ./build",
     "build": "webpack --mode production",
-    "deploy": "npm run build && npx --yes wrangler@4 pages deploy ./build --project-name kittyjump --branch main",
-    "test": "node --test $(find src -name '*.test.mjs')"
+    "deploy": "npm run build && npx --yes wrangler@4 pages deploy ./build --project-name kittyjump --branch master",
+    "test": "node --test $(find src -name '*.test.mjs')",
+    "icons": "python3 scripts/gen-icons.py"
   },
   "dependencies": {
     "@tweenjs/tween.js": "^18.6.4",
