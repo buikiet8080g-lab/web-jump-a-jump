@@ -100,7 +100,7 @@ const body = `<main class="home-main">
              href="${shareHref}"
              target="_blank"
              rel="noopener"
-             aria-label="Share Kitty Jump on X">${xLogo}<span>Share</span></a>
+             aria-label="Share Kitty Jump on X">${xLogo}<span>Share on X</span></a>
         </div>
       </div>
 

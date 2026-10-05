@@ -142,11 +142,36 @@ canvas {
     box-shadow: 0 2px 8px rgba(126, 92, 128, .12);
     transition: opacity .18s ease, background .15s ease, color .15s ease;
     -webkit-tap-highlight-color: transparent;
+    animation: share-breathe 3.4s ease-in-out infinite;
 }
 
+/* 很轻的「呼吸」：让角落里这个入口不至于完全静止，又别抢分数的注意力。
+   幅度只有 3%、周期 3.4s —— 目标是「余光能扫到」，不是「跳出来」。
+   只动 transform / box-shadow，**不动 opacity**：opacity 留给下面 :has()
+   的隐藏状态，两者叠一起会变成「半隐半现」的脏效果。 */
+@keyframes share-breathe {
+    0%, 100% { transform: scale(1);    box-shadow: 0 2px 8px rgba(126, 92, 128, .12); }
+    50%      { transform: scale(1.03); box-shadow: 0 3px 12px rgba(240, 69, 95, .20); }
+}
+
+/* 悬停时不呼吸，避免和 hover 的高亮反馈互相干扰 */
 .share-corner:hover {
+    animation-play-state: paused;
     background: #fff;
     color: #f0455f;
+}
+
+/* 系统开了「减弱动态效果」就彻底不动 */
+@media (prefers-reduced-motion: reduce) {
+    .share-corner { animation: none; }
+}
+
+/* 窄屏上分数板（居中）和右上角这个按钮会抢地方：
+   分数是 1234 这种四位数时，「Best 1234」能一直顶到右边来。
+   所以窄屏把按钮换到分数板下面一行，横向就永远打不着了
+   —— 顶部那块本来就是空白背景，不会挡到方块。 */
+@media (max-width: 420px) {
+    .share-corner { top: 60px; }
 }
 
 .share-corner svg {
