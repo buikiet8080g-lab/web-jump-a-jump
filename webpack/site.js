@@ -22,6 +22,12 @@ const SITE = {
   ga4: process.env.GA4_ID || 'G-Z6ZM31GBVV',
 
   tagline: 'A free one-thumb cat jumping game you can play in the browser.',
+
+  // X（Twitter）站点账号，只影响卡片上的「来自 @xxx」归属，可有可无。
+  // 留空就不输出 twitter:site / twitter:creator。
+  // 注意：做分享按钮、做链接预览都**不需要**在 X 上注册任何东西，
+  // 这个字段纯粹是「如果有官方账号就填一下」。
+  twitterSite: process.env.TWITTER_SITE || '',
   // 社交分享图，1200×630
   ogImage: '/og.png',
   themeColor: '#ee5568',

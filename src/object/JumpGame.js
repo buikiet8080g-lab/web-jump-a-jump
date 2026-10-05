@@ -5,6 +5,7 @@ import {setFrameAction} from '../util/TweenUtil';
 import {scoreJump} from '../util/Scoring';
 import HowToOverlay from '../ui/HowToOverlay';
 import ScoreBoard from '../ui/ScoreBoard';
+import {scoreShareIntent} from '../util/Share';
 
 // 页面图标素材（webpack 处理后文件名带 hash，所以只能 import 进来拿 URL）
 // 注意：logo.svg 不在这里 —— 顶部品牌行是静态 HTML，logo 直接内联在页面里
@@ -147,6 +148,15 @@ export default class JumpGame {
     button.textContent = 'Play Again';
     button.addEventListener('click', () => this.restart());
 
+    // 「分享到 X」。就是个普通 <a>（见 util/Share.js）：不需要 X 的 SDK、
+    // 不需要开发者账号，点了只打开预填好成绩的发帖框，发不发由用户决定。
+    // href 每次结算时才拼（要带本局分数），这里先建好元素。
+    const share = document.createElement('a');
+    share.className = 'game-over__share';
+    share.target = '_blank';
+    share.rel = 'noopener';
+    share.textContent = 'Share on X';
+
     // 本局成绩
     const stats = document.createElement('div');
     stats.className = 'game-over__stats';
@@ -168,12 +178,14 @@ export default class JumpGame {
     card.appendChild(desc);
     card.appendChild(stats);
     card.appendChild(button);
+    card.appendChild(share);
     overlay.appendChild(card);
     this.mount.appendChild(overlay);
 
     this.overlayScore = scoreValue;
     this.overlayBest = bestValue;
     this.overlayNewBest = newBest;
+    this.overlayShare = share;
 
     this.overlay = overlay;
   }
@@ -202,6 +214,11 @@ export default class JumpGame {
     this.overlayScore.textContent = String(score);
     this.overlayBest.textContent = String(best);
     this.overlayNewBest.classList.toggle('is-on', beatBest);
+
+    // 分享的文案要带本局分数，所以每次结算重新拼一次链接。
+    // 0 分（一上来就掉下去）就不给分享了 —— 分享「我得了 0 分」没意义。
+    this.overlayShare.href = scoreShareIntent(score);
+    this.overlayShare.classList.toggle('is-hidden', score < 1);
 
     this.overlay.classList.add('is-visible');
   }

@@ -164,7 +164,9 @@ function buildPage({ path: pagePath = '', title, description, body, jsonLd = [],
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${esc(title)}">
     <meta name="twitter:description" content="${esc(description)}">
-    <meta name="twitter:image" content="${esc(SITE.url + SITE.ogImage)}">
+    <meta name="twitter:image" content="${esc(SITE.url + SITE.ogImage)}">${SITE.twitterSite ? `
+    <meta name="twitter:site" content="${esc(SITE.twitterSite)}">
+    <meta name="twitter:creator" content="${esc(SITE.twitterSite)}">` : ''}
 ${renderJsonLd(jsonLd.concat([breadcrumbJsonLd(pagePath)]))}${head ? '\n' + head : ''}${renderAnalytics()}
 
     <style>

@@ -207,6 +207,36 @@ canvas {
     box-shadow: 0 4px 10px rgba(240, 69, 95, .30);
 }
 
+/* 「分享到 X」：次要按钮，故意做成描边款 ——
+   主按钮 Play Again 必须最显眼，分享是顺带的事。
+   它其实是个 <a>（就是一个 X 的 intent 链接，见 util/Share.js）。 */
+.game-over__share {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 0;
+    border: 1px solid #f0d8de;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    color: #b3646f;
+    text-decoration: none;
+    background: #fff;
+    transition: background .15s ease, border-color .15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-over__share:hover {
+    background: #fdf3f6;
+    border-color: #e7c4cd;
+}
+
+/* 0 分（一上来就掉下去）不显示分享，见 JumpGame.showOverlay */
+.game-over__share.is-hidden {
+    display: none;
+}
+
 /* 游戏结束独有的副标题 */
 .game-over__desc {
     margin-top: 8px;

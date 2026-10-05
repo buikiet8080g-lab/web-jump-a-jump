@@ -71,6 +71,21 @@ function videoGameJsonLd() {
   };
 }
 
+// 「分享到 X」的链接。X 的 Web Intent 就是个普通 URL（详见 src/util/Share.js）：
+// 静态页不需要任何脚本或 SDK 就能有分享入口，也不需要 X 开发者账号。
+const shareHref =
+  'https://x.com/intent/post?' +
+  new URLSearchParams({
+    text: 'Kitty Jump — a free one-thumb cat jumping game 🐱',
+    url: absolute(''),
+  })
+    .toString()
+    .replace(/\+/g, '%20');
+
+// X 的官方图标（内联，省一次请求；内容页零 JS 也照样显示）
+const xLogo =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
+
 const body = `<main class="home-main">
       <div class="game-column">
         <!-- 画布 / 分数板 / 浮层都由 src/index.js 注入到这里 -->
@@ -85,6 +100,12 @@ const body = `<main class="home-main">
             Kitty Jump is a browser game in the <em>jump jump</em> family. Hold to charge,
             release to hop, and land on the next block &mdash; this time every block is
             wearing a cat. No download, no account, no waiting.
+          </p>
+
+          <p class="share-row">
+            <a class="share-x" href="${shareHref}" target="_blank" rel="noopener">
+              ${xLogo}<span>Share on X</span>
+            </a>
           </p>
 
           <h2>How to play</h2>
