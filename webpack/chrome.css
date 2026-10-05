@@ -178,29 +178,6 @@ main { display: block; }
 
 .lede { font-size: 18px; color: var(--ink-soft); }
 
-/* 「分享到 X」入口（首页正文里）。
-   链接本身就是 X 的 Web Intent —— 纯 <a>，不需要脚本、SDK 或任何 X 侧注册。 */
-.share-row { margin: 0 0 4px; }
-
-.share-x {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 15px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 550;
-  color: var(--ink);
-  text-decoration: none;
-  background: #fff;
-  transition: background .15s ease, border-color .15s ease;
-}
-
-.share-x:hover { background: var(--card); border-color: #ddd6e6; }
-
-.share-x svg { width: 14px; height: 14px; fill: currentColor; flex: none; }
-
 /* 面包屑 */
 .crumbs {
   font-size: 13px;

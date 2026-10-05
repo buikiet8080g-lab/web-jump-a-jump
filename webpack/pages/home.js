@@ -72,7 +72,8 @@ function videoGameJsonLd() {
 }
 
 // 「分享到 X」的链接。X 的 Web Intent 就是个普通 URL（详见 src/util/Share.js）：
-// 静态页不需要任何脚本或 SDK 就能有分享入口，也不需要 X 开发者账号。
+// 不需要 X 开发者账号，也不需要等任何脚本 —— 静态写死在页面里就能用。
+// 按钮位置在游戏面板右上角（.share-corner，样式见 src/index.css）。
 const shareHref =
   'https://x.com/intent/post?' +
   new URLSearchParams({
@@ -88,8 +89,19 @@ const xLogo =
 
 const body = `<main class="home-main">
       <div class="game-column">
-        <!-- 画布 / 分数板 / 浮层都由 src/index.js 注入到这里 -->
-        <div class="game-stage" data-game-canvas></div>
+        <!-- 画布 / 分数板 / 浮层都由 src/index.js 注入到这里。
+
+             「分享到 X」直接写在这儿，而不是 JS 生成：它就是个普通链接
+             （X 的 Web Intent，见 src/util/Share.js），不需要等脚本，
+             进页面就能点。Stage 只往 mount 里 append 画布，不会清空它，
+             所以静态写在里面是安全的。 -->
+        <div class="game-stage" data-game-canvas>
+          <a class="share-corner"
+             href="${shareHref}"
+             target="_blank"
+             rel="noopener"
+             aria-label="Share Kitty Jump on X">${xLogo}<span>Share</span></a>
+        </div>
       </div>
 
       <div class="home-copy">
@@ -100,12 +112,6 @@ const body = `<main class="home-main">
             Kitty Jump is a browser game in the <em>jump jump</em> family. Hold to charge,
             release to hop, and land on the next block &mdash; this time every block is
             wearing a cat. No download, no account, no waiting.
-          </p>
-
-          <p class="share-row">
-            <a class="share-x" href="${shareHref}" target="_blank" rel="noopener">
-              ${xLogo}<span>Share on X</span>
-            </a>
           </p>
 
           <h2>How to play</h2>

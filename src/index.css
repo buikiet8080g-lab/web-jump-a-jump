@@ -110,6 +110,61 @@ canvas {
 }
 
 /* ---------------------------------------------------------------------------
+   「分享到 X」：钉在游戏面板右上角
+   ---------------------------------------------------------------------------
+   以前放在右边正文里，得往下滚才看得到 —— 分享是玩游戏时的冲动，
+   必须就在游戏区里。右上角是因为分数板占了顶部中间。
+
+   故意做小、做淡：它是顺手的入口，不该和分数抢注意力。
+   和 .scoreboard 不同，**它必须能点**，所以 pointer-events 保持默认；
+   代价是它占的那一小块点不到画布（蓄力），所以尺寸卡得比较死。
+--------------------------------------------------------------------------- */
+.share-corner {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, .75);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    line-height: 1.2;
+    color: #7b6a83;
+    text-decoration: none;
+    background: rgba(255, 255, 255, .74);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(126, 92, 128, .12);
+    transition: opacity .18s ease, background .15s ease, color .15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.share-corner:hover {
+    background: #fff;
+    color: #f0455f;
+}
+
+.share-corner svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+    flex: none;
+}
+
+/* 浮层（玩法提示 / 结算）打开时收起来：
+   一是会被半透明遮罩盖住显得脏，二是结算卡片里本来就有带分数的分享按钮。 */
+.game-stage:has(.how-to.is-visible) .share-corner,
+.game-stage:has(.game-over.is-visible) .share-corner {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
    弹层（玩法提示 / 游戏结束）—— 两者共用同一套外壳和卡片样式
    --------------------------------------------------------------------------- */
 
